@@ -662,7 +662,7 @@ let treeDataLandwehr = [
                         type: "couple", color: "c-landwehr", defaultExpanded: true, spouseSide: "left",
                         bridgeId: "bridge-landwehr-parents",
                         spouse: {
-                            heb: "טובה (תאה) לנדוור (קראפט)", eng: "Tova (Thea) Landwehr (Kraft)", gender: "female", death: "2018", tag: "אמא של נאוה וסימה",
+                            heb: "טובה (תאה) לנדוור (קראפט)", eng: "Tova (Thea) Landwehr (Kraft)", gender: "female", birth: "1929", death: "2018", tag: "אמא של נאוה וסימה",
                             files: [{ name: "מודעת אבל טובה לנדוור (2018)", path: "https://drive.google.com/file/d/1lqIAf_Jro8nsBK0xgc9z4mV48EkXZ0dF/view?usp=drivesdk" }]
                         },
                         blood: {
@@ -680,25 +680,25 @@ let treeDataLandwehr = [
                         children: [
                             {
                                 type: "couple", color: "c-landwehr", defaultExpanded: true, spouseSide: "right",
-                                blood: { heb: "סימה זלינגר (לנדוור)", eng: "Sima Zelinger (Landwehr)", gender: "female", id: "box-sima", tag: "אחות של נאוה" },
-                                spouse: { heb: "דני זלינגר", eng: "Dani Zelinger", gender: "male" },
+                                blood: { heb: "סימה זלינגר (לנדוור)", eng: "Sima Zelinger (Landwehr)", gender: "female", birth: "1961", id: "box-sima", tag: "אחות של נאוה" },
+                                spouse: { heb: "דני זלינגר", eng: "Dani Zelinger", gender: "male", birth: "1961" },
                                 children: [
                                     {
                                         type: "couple", color: "c-landwehr", defaultExpanded: true, spouseSide: "left",
-                                        blood: { heb: "קורל רושינק (זלינגר)", eng: "Coral Roshinek (Zelinger)", gender: "female" },
-                                        spouse: { heb: "יונתן רושינק", eng: "Yonatan Roshinek", gender: "male" },
+                                        blood: { heb: "קורל זלינגר-רושינק", eng: "Koral Zelinger-Rushinek", gender: "female", birth: "1992" },
+                                        spouse: { heb: "יונתן רושינק", eng: "Yonatan Rushinek", gender: "male", birth: "1988" },
                                         children: [
-                                            { type: "single", color: "c-landwehr", blood: { heb: "רוני רושינק", eng: "Roni Roshinek", gender: "female" } },
-                                            { type: "single", color: "c-landwehr", blood: { heb: "הילי רושינק", eng: "Hili Roshinek", gender: "female" } },
-                                            { type: "single", color: "c-landwehr", blood: { heb: "לירי רושינק", eng: "Liri Roshinek", gender: "female" } }
+                                            { type: "single", color: "c-landwehr", blood: { heb: "רוני רושינק", eng: "Roni Rushinek", gender: "female", birth: "2020" } },
+                                            { type: "single", color: "c-landwehr", blood: { heb: "הילי רושינק", eng: "Hili Rushinek", gender: "female", birth: "2020" } },
+                                            { type: "single", color: "c-landwehr", blood: { heb: "לירי רושינק", eng: "Liri Rushinek", gender: "female", birth: "2023" } }
                                         ]
                                     },
                                     {
                                         type: "couple", color: "c-landwehr", defaultExpanded: true, spouseSide: "left",
-                                        blood: { heb: "דר מרכוס (זלינגר)", eng: "Dar Marcus (Zelinger)", gender: "female" },
-                                        spouse: { heb: "אימרי מרכוס", eng: "Imri Marcus", gender: "male" },
+                                        blood: { heb: "דר זלינגר-מרקוס", eng: "Dar Zelinger-Marcus", gender: "female", birth: "1993" },
+                                        spouse: { heb: "אימרי מרקוס", eng: "Imri Marcus", gender: "male", birth: "1993" },
                                         children: [
-                                            { type: "single", color: "c-landwehr", blood: { heb: "לילי מרכוס", eng: "Lili Marcus", gender: "female" } }
+                                            { type: "single", color: "c-landwehr", blood: { heb: "לילי מרקוס", eng: "Lili Marcus", gender: "female", birth: "2026" } }
                                         ]
                                     }
                                 ]
@@ -743,10 +743,14 @@ let treeDataLandwehr = [
                 type: "couple", color: "c-dawid", defaultExpanded: true, spouseSide: "left",
                 blood: {
                     heb: "פנינה כרמלי (דוד)", eng: "Pnina Carmeli (Dawid)", gender: "female", death: "2019", tag: "בת דודה של בוזיו (שרדה)",
-                    files: [{ name: "רשומת ניצולה ביד ושם (10034959)", path: "https://collections.yadvashem.org/en/names/10034959" }]
+                    files: [
+                        { name: "רשומת ניצולה ביד ושם (10034959)", path: "https://collections.yadvashem.org/en/names/10034959" },
+                        { name: "מודעת אבל - פנינה כרמלי (2019)", path: "https://www.google.com/search?q=פנינה+כרמלי+דוד+מודעת+אבל" }
+                    ]
                 },
                 spouse: {
-                    heb: "הלל כרמלי", eng: "Hillel Carmeli", gender: "male", death: "2020"
+                    heb: "הלל כרמלי", eng: "Hillel Carmeli", gender: "male", death: "2020",
+                    files: [{ name: "מודעת אבל - הלל כרמלי (2020)", path: "https://www.google.com/search?q=הלל+כרמלי+מודעת+אבל" }]
                 },
                 children: [
                     { type: "single", color: "c-dawid", blood: { heb: "שמואל כרמלי", eng: "Shmuel Carmeli", gender: "male" } },
