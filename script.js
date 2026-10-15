@@ -1,3 +1,7 @@
+/* =========================================
+   LOGIC SECTION (App functionality)
+========================================= */
+
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZDjVPjnW_-kTHSSD0ccBX4ez-y9QrQ7M7Vmmg4WDZnPhC5YQr4VxbGyqXrBh4iaHbwg/exec';
 const driveFolderUrl = "https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM?usp=drive_link";
 
@@ -17,6 +21,28 @@ function getFallbackUrl(url) {
 
 let currentEditingPerson = null;
 let svgConnections = [];
+let scale = 0.55, pointX = 0, pointY = 0;
+
+fetch(WEB_APP_URL)
+    .then(r => r.json())
+    .then(data => {
+        const dataString = JSON.stringify(data);
+        const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור') || dataString.includes('04-מסמכי-ארכיון');
+        if(data && data.fogel && data.landwehr && !hasOldLocalLinks) {
+            mergeCloudData(treeDataFogel, data.fogel);
+            mergeCloudDataList(treeDataLandwehr, data.landwehr);
+            document.getElementById('loadingStatus').textContent = 'סונכרן בהצלחה ✅';
+            document.getElementById('loadingStatus').style.color = 'green';
+        } else {
+            saveToDrive();
+            document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
+            document.getElementById('loadingStatus').style.color = 'green';
+        }
+        renderTree();
+    }).catch(e => {
+        document.getElementById('loadingStatus').textContent = 'עובד ללא סנכרון ⚠️';
+        renderTree();
+    });
 
 function mergeCloudData(local, cloud) {
     if (!local || !cloud) return;
@@ -42,27 +68,6 @@ function mergeCloudData(local, cloud) {
 function mergeCloudDataList(localList, cloudList) {
     localList.forEach((local, i) => { if (cloudList[i]) mergeCloudData(local, cloudList[i]); });
 }
-
-fetch(WEB_APP_URL)
-    .then(r => r.json())
-    .then(data => {
-        const dataString = JSON.stringify(data);
-        const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור') || dataString.includes('04-מסמכי-ארכיון');
-        if(data && data.fogel && data.landwehr && !hasOldLocalLinks) {
-            mergeCloudData(treeDataFogel, data.fogel);
-            mergeCloudDataList(treeDataLandwehr, data.landwehr);
-            document.getElementById('loadingStatus').textContent = 'סונכרן בהצלחה ✅';
-            document.getElementById('loadingStatus').style.color = 'green';
-        } else {
-            saveToDrive();
-            document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
-            document.getElementById('loadingStatus').style.color = 'green';
-        }
-        renderTree();
-    }).catch(e => {
-        document.getElementById('loadingStatus').textContent = 'עובד ללא סנכרון ⚠️';
-        renderTree();
-    });
 
 function renderTree() {
     svgConnections = [];
@@ -199,15 +204,13 @@ function buildTreeNode(item) {
 
 function drawSVGConnections() {
     const canvas = document.getElementById('canvas');
-    
-    // יישור אופקי אוטומטי של סבינה וגוסטה
     const sabinaBox = document.getElementById('box-sabina');
     const gustaBox = document.getElementById('box-gusta');
     const rootGustaLi = document.getElementById('root-gusta-li');
     
     if (sabinaBox && rootGustaLi && gustaBox) {
         rootGustaLi.style.marginTop = '0px'; 
-        const diffUnscaled = (sabinaBox.getBoundingClientRect().top - gustaBox.getBoundingClientRect().top) / scale;
+        const diffUnscaled = (sabinaBox.getBoundingClientRect().top - gustaBox.getBoundingClientRect().top) / Math.max(0.1, scale);
         if (Math.abs(diffUnscaled) > 0.5) {
             rootGustaLi.style.marginTop = diffUnscaled + 'px';
         }
@@ -217,7 +220,6 @@ function drawSVGConnections() {
     svg.innerHTML = '';
     const canvasRect = canvas.getBoundingClientRect();
 
-    // חסינות לזום: חישוב מיקומים מתמטי במקום גאומטרי נקי
     function getNativeCoords(el) {
         const r = el.getBoundingClientRect();
         return {
@@ -246,7 +248,6 @@ function drawSVGConnections() {
         }
 
         const childCoords = validTargets.map(el => getNativeCoords(el));
-
         const minChildY = Math.min(...childCoords.map(c => c.y));
         const railY = minChildY - railOffsetFromChildrenTop;
 
@@ -277,7 +278,6 @@ function drawSVGConnections() {
     drawOrthogonalTreeLines('bridge-fredel-josef', ['box-mina', 'box-inda-lea'], 58, '#111111', '2', null);
     drawOrthogonalTreeLines('bridge-landwehr-parents', ['box-sima', 'box-nava'], 40, '#b45309', '2.8', null);
 
-    // קו אחיות חדש: סבינה וגוסטה
     if (sabinaBox && gustaBox && sabinaBox.offsetWidth > 0 && gustaBox.offsetWidth > 0) {
         const sCoords = getNativeCoords(sabinaBox);
         const gCoords = getNativeCoords(gustaBox);
@@ -299,46 +299,6 @@ function drawSVGConnections() {
 const canvasEl = document.getElementById('canvas');
 const resizeObserver = new ResizeObserver(() => { drawSVGConnections(); });
 resizeObserver.observe(canvasEl);
-document.addEventListener('load', function(e){ if(e.target.tagName === 'IMG') drawSVGConnections(); }, true);
-
-function printPoster(mode) {
-    document.body.classList.add('printing');
-    if (mode === 'basic') document.body.classList.add('print-basic');
-    if (mode === 'advanced') document.body.classList.add('print-advanced');
-    
-    const oldScale = scale; const oldX = pointX; const oldY = pointY;
-    scale = 1; pointX = 0; pointY = 0; 
-    
-    canvasEl.style.transition = 'none';
-    canvasEl.style.transform = 'none';
-    void canvasEl.offsetWidth; 
-    
-    const w = canvasEl.scrollWidth;
-    const h = canvasEl.scrollHeight;
-    
-    const svg = document.getElementById('svg-lines');
-    svg.style.width = w + 'px';
-    svg.style.height = h + 'px';
-    drawSVGConnections();
-    
-    let style = document.getElementById('print-page-style');
-    if (!style) {
-        style = document.createElement('style');
-        style.id = 'print-page-style';
-        document.head.appendChild(style);
-    }
-    style.innerHTML = `@media print { @page { size: ${w + 100}px ${h + 100}px; margin: 0; } }`;
-    
-    setTimeout(() => {
-        window.print();
-        document.body.classList.remove('printing', 'print-basic', 'print-advanced');
-        svg.style.width = '100%';
-        svg.style.height = '100%';
-        style.innerHTML = '';
-        scale = oldScale; pointX = oldX; pointY = oldY;
-        updateTransform();
-    }, 500);
-}
 
 function openModal(person) {
     currentEditingPerson = person;
@@ -567,8 +527,6 @@ function collapseAll() {
     fitToScreen();
 }
 
-let scale = 0.55, pointX = 0, pointY = 0, isPanning = false, startX = 0, startY = 0;
-
 function updateTransform() {
     canvasEl.style.transition = 'none';
     canvasEl.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
@@ -593,32 +551,177 @@ function fitToScreen() {
     updateTransform();
 }
 
-const viewport = document.getElementById('viewport');
-viewport.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) return;
-    isPanning = true;
-    viewport.classList.add('grabbing');
-    startX = e.clientX - pointX;
-    startY = e.clientY - pointY;
-});
+// ============================================
+// מנגנון מגע (Touch) למובייל ולעכבר
+// ============================================
+(function() {
+    var vp = document.getElementById('viewport');
+    var pinchDistance = null;
+    var mobilePanning = false;
+    var mStartX = 0;
+    var mStartY = 0;
 
-window.addEventListener('mousemove', (e) => {
-    if (!isPanning) return;
-    pointX = e.clientX - startX;
-    pointY = e.clientY - startY;
+    // עכבר
+    vp.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) return;
+        mobilePanning = true;
+        vp.classList.add('grabbing');
+        mStartX = e.clientX - pointX;
+        mStartY = e.clientY - pointY;
+    });
+
+    window.addEventListener('mousemove', function(e) {
+        if (!mobilePanning || e.touches) return;
+        pointX = e.clientX - mStartX;
+        pointY = e.clientY - mStartY;
+        updateTransform();
+    });
+
+    window.addEventListener('mouseup', function() {
+        mobilePanning = false;
+        vp.classList.remove('grabbing');
+    });
+
+    vp.addEventListener('wheel', function(e) {
+        if (e.target.closest('#modal-content')) return;
+        e.preventDefault();
+        zoom(e.deltaY < 0 ? 0.08 : -0.08);
+    }, { passive: false });
+
+    // טאץ' (מובייל)
+    vp.addEventListener('touchstart', function(e) {
+        if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) {
+            return;
+        }
+        if (e.touches.length === 1) {
+            mobilePanning = true;
+            mStartX = e.touches[0].clientX - pointX;
+            mStartY = e.touches[0].clientY - pointY;
+        } else if (e.touches.length === 2) {
+            mobilePanning = false;
+            pinchDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchmove', function(e) {
+        if (e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) {
+            return;
+        }
+        if (e.touches.length === 1 && mobilePanning) {
+            e.preventDefault();
+            pointX = e.touches[0].clientX - mStartX;
+            pointY = e.touches[0].clientY - mStartY;
+            updateTransform();
+        } else if (e.touches.length === 2 && pinchDistance !== null) {
+            e.preventDefault();
+            var currentDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            var delta = (currentDist - pinchDistance) * 0.005;
+            zoom(delta);
+            pinchDistance = currentDist;
+        }
+    }, {passive: false});
+
+    vp.addEventListener('touchend', function(e) {
+        if (e.touches.length < 1) mobilePanning = false;
+        if (e.touches.length < 2) pinchDistance = null;
+    });
+})();
+
+// ============================================
+// פונקציית שמירת הפוסטר
+// ============================================
+function exportTreeAsImage(mode) {
+    var loader = document.getElementById('snapshot-loader');
+    var loaderText = document.getElementById('loader-text');
+    loader.style.display = 'flex';
+    loaderText.textContent = "מכין את העץ לצילום איכותי... ⏳";
+
+    document.body.classList.add('printing-export');
+    if (mode === 'basic') {
+        document.body.classList.add('print-basic');
+    }
+
+    var canvas = document.getElementById('canvas');
+    var oldScale = scale;
+    var oldX = pointX;
+    var oldY = pointY;
+
+    scale = 1;
+    pointX = 0;
+    pointY = 0;
+    canvas.style.transition = 'none';
+    canvas.style.transform = 'none';
+    if (typeof drawSVGConnections === 'function') drawSVGConnections();
+
+    setTimeout(function() {
+        var w = canvas.scrollWidth;
+        var h = canvas.scrollHeight;
+        var svg = document.getElementById('svg-lines');
+        svg.style.width = w + 'px';
+        svg.style.height = h + 'px';
+        if (typeof drawSVGConnections === 'function') drawSVGConnections();
+
+        loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
+
+        html2canvas(canvas, {
+            scale: 1.5,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#f4f6f9',
+            width: w,
+            height: h,
+            windowWidth: w,
+            windowHeight: h,
+            ignoreElements: function(el) {
+                if (el.tagName === 'IMG' && el.src && el.src.indexOf('drive.google.com') !== -1) {
+                    return true;
+                }
+                return false;
+            }
+        }).then(function(renderedCanvas) {
+            restoreView(oldScale, oldX, oldY, svg);
+            loaderText.textContent = "פותח חלון שמירה... 💾";
+
+            renderedCanvas.toBlob(function(blob) {
+                loader.style.display = 'none';
+                if (!blob) {
+                    alert("שגיאה ביצירת הקובץ.");
+                    return;
+                }
+                var filename = mode === 'basic' ? 'family-tree-v2.6-basic.png' : 'family-tree-v2.6-advanced.png';
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+            }, 'image/png');
+        }).catch(function(err) {
+            console.error(err);
+            restoreView(oldScale, oldX, oldY, svg);
+            loader.style.display = 'none';
+            alert("שגיאה ביצירת התמונה: " + err.message);
+        });
+    }, 600);
+}
+
+function restoreView(oldScale, oldX, oldY, svg) {
+    document.body.classList.remove('print-basic', 'printing-export');
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    scale = oldScale;
+    pointX = oldX;
+    pointY = oldY;
     updateTransform();
-});
-
-window.addEventListener('mouseup', () => {
-    isPanning = false;
-    viewport.classList.remove('grabbing');
-});
-
-viewport.addEventListener('wheel', (e) => {
-    if (e.target.closest('#modal-content')) return;
-    e.preventDefault();
-    zoom(e.deltaY < 0 ? 0.08 : -0.08);
-}, { passive: false });
+}
 
 window.addEventListener('resize', () => { drawSVGConnections(); });
 window.addEventListener('load', () => setTimeout(drawSVGConnections, 500));
