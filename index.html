@@ -9,14 +9,14 @@
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; touch-action: none; }
-    .toolbar { position: fixed; top: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.96); padding: 10px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 8px; align-items: center; border: 1px solid #ddd; flex-wrap: wrap; }
+    .toolbar { position: fixed; top: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.96); padding: 10px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 8px; align-items: center; border: 1px solid #ddd; flex-wrap: wrap; max-width: calc(100vw - 30px); }
     .toolbar h1 { font-size: 15px; color: #222; margin-left: 8px; font-weight: 700; }
     .toolbar .version-badge { font-size: 11px; background: #e2e8f0; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
     .toolbar button { background: #ffffff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #333; transition: all 0.2s; }
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
     .toolbar button.secondary { background: #10b981; color: white; border-color: #059669; }
-    .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; max-width: calc(100vw - 30px); }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-box { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
     .legend-blood { border: 2.5px solid #111; background: #fff; }
@@ -74,11 +74,11 @@
     .c-dawid { background-color: #ffd966 !important; }
 
     #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-    #modal-content { background: #fff; width: 680px; max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; }
+    #modal-content { background: #fff; width: 680px; max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; touch-action: auto; }
     #modal-header { background: #1e40af; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; direction: rtl; }
     #modal-header h2 { font-size: 18px; margin: 0; display: inline-block; }
     #modal-close { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; }
-    #modal-body, #modal-edit { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; text-align: right; direction: rtl; }
+    #modal-body, #modal-edit { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; text-align: right; direction: rtl; -webkit-overflow-scrolling: touch; }
     .modal-section { background: #f8f9fa; padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; }
     .modal-section h3 { font-size: 14px; color: #1e40af; margin-bottom: 8px; }
     .modal-section p { font-size: 13.5px; color: #222; line-height: 1.55; white-space: pre-line; }
@@ -92,236 +92,4 @@
     .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
 
     /* הודעת טעינה */
-    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; padding: 20px; }
-    .loader-spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    body.print-basic img { display: none !important; }
-</style>
-</head>
-<body>
-
-<div id="snapshot-loader">
-    <div class="loader-spinner"></div>
-    <div id="loader-text">מייצר תמונה איכותית של העץ, רגע אחד... 📸</div>
-</div>
-
-<div class="toolbar">
-    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v2.3</span></h1>
-    <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;">מסתנכרן...</div>
-    <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
-    <button onclick="zoom(0.12)">+</button>
-    <button onclick="zoom(-0.12)">-</button>
-    <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
-    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
-</div>
-
-<div class="legend">
-    <div class="legend-item"><span class="legend-box legend-blood"></span><span><b>צאצא ביולוגי</b></span></div>
-    <div class="legend-item"><span class="legend-box legend-spouse"></span><span><b>בן/בת זוג</b></span></div>
-    <div class="legend-item"><span>✡️ <b>נרצחו בשואה</b></span></div>
-</div>
-
-<div id="viewport">
-    <div id="canvas">
-        <svg id="svg-lines"></svg>
-        <div style="display:flex; flex-direction:column; align-items:center;">
-            <div class="wing-title" style="visibility:hidden; padding: 6px 18px; margin-bottom: 14px;">Spacer</div>
-            <div class="tree" id="treeFogel"></div>
-        </div>
-        <div id="landwehrWingWrapper" style="display:flex; flex-direction:column; align-items:center;">
-            <div class="wing-title" style="background:#ffe599; border-color:#b45309;">משפחת לנדוור, קראפט ודוד</div>
-            <div class="tree" id="treeLandwehr"></div>
-        </div>
-    </div>
-</div>
-
-<div id="modal-overlay" onclick="closeModal()">
-    <div id="modal-content" onclick="event.stopPropagation()">
-        <div id="modal-header">
-            <div>
-                <h2 id="modal-title">פרטי בן משפחה</h2>
-                <button id="modal-edit-btn" onclick="enterEditMode()" style="background: none; border: none; font-size: 18px; cursor: pointer; margin-right: 15px; color: white;" title="ערוך פרטים">✏️ ערוך</button>
-            </div>
-            <button id="modal-close" onclick="closeModal()">✕</button>
-        </div>
-        
-        <div id="modal-body">
-            <div style="display:flex; justify-content:center;">
-                <img id="modal-profile-img" src="" style="width:120px; height:120px; object-fit:cover; border-radius:50%; border:3px solid #1e40af; display:none; margin-bottom:10px;">
-            </div>
-            <div id="modal-dates" style="text-align:center; font-weight:700; color:#555; margin-bottom:10px;"></div>
-            
-            <div class="modal-section">
-                <h3>📜 סיפור, תיעוד וממצאי מחקר</h3>
-                <p id="modal-story"></p>
-            </div>
-            <div class="modal-section" id="image-section" style="display:none;">
-                <h3>🖼️ תמונות ודיוקנאות מתוך הארכיון</h3>
-                <div id="modal-images" class="modal-img-grid"></div>
-            </div>
-            <div class="modal-section">
-                <h3>📁 מסמכים, דפי עד וקישורים ישירים</h3>
-                <div id="modal-files"></div>
-            </div>
-            <div class="modal-section">
-                <h3>📚 קבצי מחקר ואינדקס כלליים</h3>
-                <div id="global-files"></div>
-            </div>
-        </div>
-
-        <div id="modal-edit" style="display:none;">
-            <label>שם מלא (עברית):</label>
-            <input type="text" id="editNameHeb">
-            <label>שם באנגלית (לא חובה):</label>
-            <input type="text" id="editNameEng">
-            <label>העלאת תמונת פרופיל:</label>
-            <input type="file" id="editImage" accept="image/*">
-            <div id="uploadStatus" style="color: green; font-size: 12px; display: none; margin-bottom: 10px;">מעלה...</div>
-            <label>שנת לידה / תאריך:</label>
-            <input type="text" id="editBirth">
-            <label>שנת פטירה (להשאיר ריק אם בחיים):</label>
-            <input type="text" id="editDeath">
-
-            <label>מגדר:</label><br>
-            <label><input type="radio" name="editGender" value="male"> זכר (מרובע)</label>
-            <label style="margin-right: 15px;"><input type="radio" name="editGender" value="female"> נקבה (מעוגל)</label>
-            <br><br>
-
-            <label style="color: #b83b5e; font-weight: 700; margin-bottom: 15px; display: block; border: 1px solid #b83b5e; padding: 10px; border-radius: 5px;">
-                <input type="checkbox" id="editPerished"> ✡️ נרצח/ה בשואה
-            </label>
-
-            <button class="edit-btn" onclick="saveEdit()">שמור שינויים ☁️</button>
-            <button class="cancel-btn" onclick="cancelEdit()">ביטול</button>
-        </div>
-    </div>
-</div>
-
-<script src="data.js"></script>
-<script src="script.js"></script>
-<script>
-// ניהול מגע משופר למובייל
-const viewport = document.getElementById('viewport');
-let initialDistance = null;
-let touchStartX = 0;
-let touchStartY = 0;
-let isPanning = false;
-
-viewport.addEventListener('touchstart', (e) => {
-    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) return;
-    
-    if (e.touches.length === 1) {
-        isPanning = true;
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        startX = touchStartX - pointX;
-        startY = touchStartY - pointY;
-    } else if (e.touches.length === 2) {
-        isPanning = false;
-        initialDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
-    }
-}, {passive: false});
-
-viewport.addEventListener('touchmove', (e) => {
-    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) return;
-    
-    if (!isPanning && initialDistance === null) return;
-    
-    e.preventDefault(); 
-
-    if (e.touches.length === 1 && isPanning) {
-        pointX = e.touches[0].clientX - startX;
-        pointY = e.touches[0].clientY - startY;
-        updateTransform();
-    } else if (e.touches.length === 2 && initialDistance !== null) {
-        const currentDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
-        const delta = (currentDistance - initialDistance) * 0.005;
-        zoom(delta);
-        initialDistance = currentDistance;
-    }
-}, {passive: false});
-
-viewport.addEventListener('touchend', (e) => {
-    if (e.touches.length < 1) isPanning = false;
-    if (e.touches.length < 2) initialDistance = null;
-});
-
-// יצוא ישיר כקובץ דרך Blob להקפצת חלון 'Save As'
-function exportTreeAsImage(mode) {
-    const loader = document.getElementById('snapshot-loader');
-    const loaderText = document.getElementById('loader-text');
-    loader.style.display = 'flex';
-    loaderText.textContent = "מכין את העץ לצילום איכותי... ⏳";
-
-    if (mode === 'basic') {
-        document.body.classList.add('print-basic');
-    }
-
-    const canvas = document.getElementById('canvas');
-    const oldTransform = canvas.style.transform;
-    const oldTransition = canvas.style.transition;
-
-    canvas.style.transition = 'none';
-    canvas.style.transform = 'none';
-    if (typeof drawSVGConnections === 'function') drawSVGConnections();
-
-    setTimeout(() => {
-        loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
-        html2canvas(canvas, {
-            scale: window.devicePixelRatio > 1 ? 2 : 1,
-            useCORS: true,
-            allowTaint: false, 
-            backgroundColor: '#f4f6f9'
-        }).then(renderedCanvas => {
-            canvas.style.transform = oldTransform;
-            canvas.style.transition = oldTransition;
-            if (typeof drawSVGConnections === 'function') drawSVGConnections();
-            document.body.classList.remove('print-basic');
-            
-            loaderText.textContent = "פותח חלון שמירה... 💾";
-
-            // יצירת קובץ אמיתי (Blob) כדי לעקוף חסימות ולהקפיץ "Save As"
-            renderedCanvas.toBlob(function(blob) {
-                if (!blob) {
-                    alert("שגיאה: לא ניתן היה לייצר את הקובץ. ייתכן שיש חסימת אבטחה בגלל התמונות.");
-                    loader.style.display = 'none';
-                    return;
-                }
-                const filename = mode === 'basic' ? 'family-tree-v2.3-basic.png' : 'family-tree-v2.3-advanced.png';
-                const url = URL.createObjectURL(blob);
-                
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = filename;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                    loader.style.display = 'none';
-                }, 150);
-            }, 'image/png');
-
-        }).catch(err => {
-            console.error(err);
-            canvas.style.transform = oldTransform;
-            canvas.style.transition = oldTransition;
-            if (typeof drawSVGConnections === 'function') drawSVGConnections();
-            document.body.classList.remove('print-basic');
-            loader.style.display = 'none';
-            alert("שגיאה ביצירת התמונה. אם זו שגיאת אבטחה (CORS) בגלל תמונות, נסה לשמור כ-'פוסטר בסיסי'.");
-        });
-    }, 1000);
-}
-</script>
-</body>
-</html>
+    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-
