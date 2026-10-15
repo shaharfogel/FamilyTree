@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>עץ שורשים משפחתי משולב</title>
+<title>עץ משפחת פוגל המורחבת</title>
 <!-- טעינת ספריית צילום מסך מתקדמת -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -11,6 +11,7 @@
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; touch-action: none; }
     .toolbar { position: fixed; top: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.96); padding: 10px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 8px; align-items: center; border: 1px solid #ddd; flex-wrap: wrap; }
     .toolbar h1 { font-size: 15px; color: #222; margin-left: 8px; font-weight: 700; }
+    .toolbar .version-badge { font-size: 11px; background: #e2e8f0; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
     .toolbar button { background: #ffffff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #333; transition: all 0.2s; }
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
@@ -100,7 +101,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 עץ שורשים משולב</h1>
+    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v1.8</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;">מסתנכרן...</div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="zoom(0.12)">+</button>
@@ -194,7 +195,6 @@
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
-// תמיכה מלאה במגע (טאץ' ומולטי-טאץ') למובייל
 const viewport = document.getElementById('viewport');
 let initialDistance = null;
 
@@ -266,7 +266,7 @@ function exportTreeAsImage(mode) {
             loader.style.display = 'none';
 
             const link = document.createElement('a');
-            link.download = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png';
+            link.download = 'family-tree-v1.8.png';
             link.href = renderedCanvas.toDataURL('image/png');
             link.click();
         }).catch(err => {
