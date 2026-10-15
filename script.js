@@ -210,7 +210,6 @@ function drawSVGConnections() {
     const gustaBox = document.getElementById('box-gusta');
     const rootGustaLi = document.getElementById('root-gusta-li');
     
-    // מנגנון יישור קבוע שלא מושפע משינויי זום (Scale)
     if (sabinaBox && rootGustaLi && gustaBox) {
         rootGustaLi.style.marginTop = '0px'; 
         
@@ -549,8 +548,20 @@ function updateTransform() {
     });
 }
 
-function zoom(delta) {
-    scale = Math.min(Math.max(0.12, scale + delta), 2.5);
+// פונקציית זום חכמה שמתמקדת בנקודת ה-Focal Point (היכן שהאצבעות/העכבר נמצאים)
+function zoom(delta, focalX, focalY) {
+    const newScale = Math.min(Math.max(0.12, scale + delta), 2.5);
+    if (newScale === scale) return;
+    
+    if (focalX !== undefined && focalY !== undefined) {
+        const vpRect = document.getElementById('viewport').getBoundingClientRect();
+        const cx = vpRect.left + vpRect.width / 2 + pointX;
+        const cy = vpRect.top + pointY;
+        const ratio = newScale / scale;
+        pointX += (focalX - cx) * (1 - ratio);
+        pointY += (focalY - cy) * (1 - ratio);
+    }
+    scale = newScale;
     updateTransform();
 }
 
@@ -565,14 +576,14 @@ function fitToScreen() {
 }
 
 // ============================================
-// מנגנון מגע (Touch) למובייל ולעכבר
+// מנגנון מגע (Touch) משופר למובייל ולעכבר
 // ============================================
 (function() {
-    var vp = document.getElementById('viewport');
-    var pinchDistance = null;
-    var mobilePanning = false;
-    var mStartX = 0;
-    var mStartY = 0;
+    const vp = document.getElementById('viewport');
+    let pinchDistance = null;
+    let mobilePanning = false;
+    let mStartX = 0;
+    let mStartY = 0;
 
     // עכבר
     vp.addEventListener('mousedown', function(e) {
@@ -598,7 +609,7 @@ function fitToScreen() {
     vp.addEventListener('wheel', function(e) {
         if (e.target.closest('#modal-content')) return;
         e.preventDefault();
-        zoom(e.deltaY < 0 ? 0.08 : -0.08);
+        zoom(e.deltaY < 0 ? 0.08 : -0.08, e.clientX, e.clientY);
     }, { passive: false });
 
     // טאץ' (מובייל)
@@ -630,30 +641,39 @@ function fitToScreen() {
             updateTransform();
         } else if (e.touches.length === 2 && pinchDistance !== null) {
             e.preventDefault();
-            var currentDist = Math.hypot(
+            const currentDist = Math.hypot(
                 e.touches[0].clientX - e.touches[1].clientX,
                 e.touches[0].clientY - e.touches[1].clientY
             );
-            var delta = (currentDist - pinchDistance) * 0.005;
-            zoom(delta);
+            const delta = (currentDist - pinchDistance) * 0.005;
+            const focalX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const focalY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            zoom(delta, focalX, focalY);
             pinchDistance = currentDist;
         }
     }, {passive: false});
 
+    // תיקון "קפיצה" כשמרימים אצבע אחת
     vp.addEventListener('touchend', function(e) {
-        if (e.touches.length < 1) mobilePanning = false;
-        if (e.touches.length < 2) pinchDistance = null;
+        if (e.touches.length === 0) {
+            mobilePanning = false;
+            pinchDistance = null;
+        } else if (e.touches.length === 1) {
+            mobilePanning = true;
+            mStartX = e.touches[0].clientX - pointX;
+            mStartY = e.touches[0].clientY - pointY;
+            pinchDistance = null;
+        }
     });
 })();
 
 // ============================================
-// פונקציית שמירת הפוסטר (מעודכן: תיקון קווים, ניקוי מצבים, ועקיפת חסימות תמונה)
+// פונקציית שמירת הפוסטר
 // ============================================
 function exportTreeAsImage(mode) {
     var loader = document.getElementById('snapshot-loader');
     var loaderText = document.getElementById('loader-text');
     
-    // ניקוי מצבים קודמים שנתקעו כדי שהתאריכים והפרטים יופיעו כראוי במתקדם
     document.body.classList.remove('print-basic', 'printing-export');
     
     loader.style.display = 'flex';
@@ -696,7 +716,6 @@ function exportTreeAsImage(mode) {
             windowWidth: w,
             windowHeight: h,
             onclone: function(clonedDoc) {
-                // מנגנון חכם לשאיבת תמונות חסומות מגוגל דרייב אל תוך הפוסטר המתקדם
                 var imgs = clonedDoc.querySelectorAll('.person img');
                 for(var i = 0; i < imgs.length; i++) {
                     var img = imgs[i];
@@ -715,7 +734,7 @@ function exportTreeAsImage(mode) {
                     alert("שגיאה ביצירת הקובץ.");
                     return;
                 }
-                var filename = mode === 'basic' ? 'family-tree-v2.9-basic.png' : 'family-tree-v2.9-advanced.png';
+                var filename = mode === 'basic' ? 'family-tree-v2.10-basic.png' : 'family-tree-v2.10-advanced.png';
                 var url = URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
