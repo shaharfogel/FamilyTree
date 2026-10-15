@@ -101,13 +101,14 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v1.8</span></h1>
+    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v1.9</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;">מסתנכרן...</div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="zoom(0.12)">+</button>
     <button onclick="zoom(-0.12)">-</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור תמונה</button>
+    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
+    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
 </div>
 
 <div class="legend">
@@ -266,7 +267,7 @@ function exportTreeAsImage(mode) {
             loader.style.display = 'none';
 
             const link = document.createElement('a');
-            link.download = 'family-tree-v1.8.png';
+            link.download = mode === 'basic' ? 'family-tree-v1.9-basic.png' : 'family-tree-v1.9-advanced.png';
             link.href = renderedCanvas.toDataURL('image/png');
             link.click();
         }).catch(err => {
