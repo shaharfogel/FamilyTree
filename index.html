@@ -15,7 +15,6 @@
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
     .toolbar button.secondary { background: #10b981; color: white; border-color: #059669; }
-    .toolbar button.snapshot { background: #7c3aed; color: white; border-color: #6d28d9; }
     .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-box { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
@@ -215,11 +214,13 @@ function exportTreeAsImage(mode) {
     canvas.style.transform = 'none';
     if (typeof drawSVGConnections === 'function') drawSVGConnections();
 
+    // השהייה ממושכת שמוודאת שהתמונות מהענן והקווים נטענים וממוקמים עד הסוף לפני הצילום
     setTimeout(() => {
         html2canvas(canvas, {
             scale: 2,
             useCORS: true,
-            allowTaint: true,
+            allowTaint: false,
+            logging: false,
             backgroundColor: '#f4f6f9'
         }).then(renderedCanvas => {
             canvas.style.transform = oldTransform;
@@ -241,7 +242,7 @@ function exportTreeAsImage(mode) {
             loader.style.display = 'none';
             alert('שגיאה ביצירת התמונה. נסה שוב.');
         });
-    }, 400);
+    }, 1200);
 }
 </script>
 </body>
