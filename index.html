@@ -91,7 +91,6 @@
     .edit-btn { background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; }
     .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
 
-    /* הודעת טעינה בעת יצירת התמונה */
     #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 20px; font-weight: bold; flex-direction: column; gap: 15px; }
 </style>
 </head>
@@ -110,7 +109,8 @@
     <button onclick="zoom(0.12)">זום +</button>
     <button onclick="zoom(-0.12)">זום -</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="snapshot" onclick="exportTreeAsImage()">📸 שמור כתמונה (PNG)</button>
+    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
+    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
 </div>
 
 <div class="legend">
@@ -199,47 +199,49 @@
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
-// פונקציית ייצוא תמונה נקייה של כל העץ
-function exportTreeAsImage() {
+function exportTreeAsImage(mode) {
     const loader = document.getElementById('snapshot-loader');
     loader.style.display = 'flex';
+
+    if (mode === 'basic') {
+        document.body.classList.add('print-basic');
+    }
 
     const canvas = document.getElementById('canvas');
     const oldTransform = canvas.style.transform;
     const oldTransition = canvas.style.transition;
 
-    // איפוס זום והזזה לצורך צילום נקי בגודל מלא
     canvas.style.transition = 'none';
     canvas.style.transform = 'none';
-    drawSVGConnections();
+    if (typeof drawSVGConnections === 'function') drawSVGConnections();
 
     setTimeout(() => {
         html2canvas(canvas, {
-            scale: 2, // איכות גבוהה (Retina)
+            scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#f4f6f9'
         }).then(renderedCanvas => {
-            // החזרה למצב הקודם של המסך
             canvas.style.transform = oldTransform;
             canvas.style.transition = oldTransition;
-            drawSVGConnections();
+            if (typeof drawSVGConnections === 'function') drawSVGConnections();
+            document.body.classList.remove('print-basic');
             loader.style.display = 'none';
 
-            // הורדת הקובץ אוטומטית למחשב
             const link = document.createElement('a');
-            link.download = 'family-tree-poster.png';
+            link.download = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png';
             link.href = renderedCanvas.toDataURL('image/png');
             link.click();
         }).catch(err => {
             console.error(err);
             canvas.style.transform = oldTransform;
             canvas.style.transition = oldTransition;
-            drawSVGConnections();
+            if (typeof drawSVGConnections === 'function') drawSVGConnections();
+            document.body.classList.remove('print-basic');
             loader.style.display = 'none';
-            alert('אגיאה ביצירת התמונה. נסה שוב.');
+            alert('שגיאה ביצירת התמונה. נסה שוב.');
         });
-    }, 300);
+    }, 400);
 }
 </script>
 </body>
