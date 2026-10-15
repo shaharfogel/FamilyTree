@@ -91,17 +91,20 @@
     .edit-btn { background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; }
     .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
 
-    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 20px; font-weight: bold; flex-direction: column; gap: 15px; }
+    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; padding: 20px; }
+    .loader-spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div id="snapshot-loader">
-    <div>מייצר תמונה איכותית של העץ, רגע אחד... 📸</div>
+    <div class="loader-spinner"></div>
+    <div id="loader-text">מייצר תמונה איכותית של העץ, רגע אחד... 📸</div>
 </div>
 
 <div class="toolbar">
-    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v1.9</span></h1>
+    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v2.0</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;">מסתנכרן...</div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="zoom(0.12)">+</button>
@@ -238,7 +241,9 @@ viewport.addEventListener('touchend', (e) => {
 
 function exportTreeAsImage(mode) {
     const loader = document.getElementById('snapshot-loader');
+    const loaderText = document.getElementById('loader-text');
     loader.style.display = 'flex';
+    loaderText.textContent = "מכין את העץ לצילום איכותי... ⏳";
 
     if (mode === 'basic') {
         document.body.classList.add('print-basic');
@@ -253,6 +258,7 @@ function exportTreeAsImage(mode) {
     if (typeof drawSVGConnections === 'function') drawSVGConnections();
 
     setTimeout(() => {
+        loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
         html2canvas(canvas, {
             scale: 2,
             useCORS: true,
@@ -264,12 +270,26 @@ function exportTreeAsImage(mode) {
             canvas.style.transition = oldTransition;
             if (typeof drawSVGConnections === 'function') drawSVGConnections();
             document.body.classList.remove('print-basic');
-            loader.style.display = 'none';
+            
+            loaderText.textContent = "מוריד את התמונה למכשירך! 🎉";
 
-            const link = document.createElement('a');
-            link.download = mode === 'basic' ? 'family-tree-v1.9-basic.png' : 'family-tree-v1.9-advanced.png';
-            link.href = renderedCanvas.toDataURL('image/png');
-            link.click();
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 600);
+
+            const imageURL = renderedCanvas.toDataURL('image/png');
+            
+            // פתיחת חלון הורדה עוקף חסימות דפדפן
+            const filename = mode === 'basic' ? 'family-tree-v2.0-basic.png' : 'family-tree-v2.0-advanced.png';
+            
+            // שימוש בעגינה דינמית להורדה בטוחה בכל מכשיר (מחשב ונייד)
+            const downloadLink = document.createElement('a');
+            downloadLink.href = imageURL;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
         }).catch(err => {
             console.error(err);
             canvas.style.transform = oldTransform;
@@ -279,7 +299,7 @@ function exportTreeAsImage(mode) {
             loader.style.display = 'none';
             alert('שגיאה ביצירת התמונה. נסה שוב.');
         });
-    }, 1200);
+    }, 1500);
 }
 </script>
 </body>
