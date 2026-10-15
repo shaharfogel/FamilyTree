@@ -38,9 +38,11 @@ fetch(WEB_APP_URL)
             document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         }
+        document.getElementById('initial-loader').style.display = 'none';
         renderTree();
     }).catch(e => {
         document.getElementById('loadingStatus').textContent = 'עובד ללא סנכרון ⚠️';
+        document.getElementById('initial-loader').style.display = 'none';
         renderTree();
     });
 
@@ -694,7 +696,7 @@ function exportTreeAsImage(mode) {
                     alert("שגיאה ביצירת הקובץ.");
                     return;
                 }
-                var filename = mode === 'basic' ? 'family-tree-v2.6-basic.png' : 'family-tree-v2.6-advanced.png';
+                var filename = mode === 'basic' ? 'family-tree-v2.8-basic.png' : 'family-tree-v2.8-advanced.png';
                 var url = URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
