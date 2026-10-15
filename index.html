@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>עץ שורשים משפחתי משולב</title>
+<!-- טעינת ספריית צילום מסך מתקדמת -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
@@ -13,6 +15,7 @@
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
     .toolbar button.secondary { background: #10b981; color: white; border-color: #059669; }
+    .toolbar button.snapshot { background: #7c3aed; color: white; border-color: #6d28d9; }
     .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-box { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
@@ -88,24 +91,15 @@
     .edit-btn { background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; }
     .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
 
-    /* הגדרות הדפסה מתקדמות לפוסטר ענק */
-    @media print {
-        @page {
-            size: landscape;
-            margin: 10mm;
-        }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-        body { background: #f4f6f9 !important; overflow: visible !important; height: auto !important; width: auto !important; }
-        #viewport { overflow: visible !important; height: auto !important; width: auto !important; display: block !important; position: relative !important; }
-        #canvas { transform: none !important; padding: 20px !important; margin: 0 !important; display: inline-flex !important; width: max-content !important; }
-        #svg-lines { position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; }
-        body.printing .toolbar, body.printing .legend, body.printing .toggle-badge, body.printing .has-media { display: none !important; }
-        body.print-basic img { display: none !important; }
-        body.print-basic .node-dates { display: none !important; }
-    }
+    /* הודעת טעינה בעת יצירת התמונה */
+    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 20px; font-weight: bold; flex-direction: column; gap: 15px; }
 </style>
 </head>
 <body>
+
+<div id="snapshot-loader">
+    <div>מייצר תמונה איכותית של העץ, רגע אחד... 📸</div>
+</div>
 
 <div class="toolbar">
     <h1>🌳 עץ שורשים משולב: פוגל-פייגל + לנדוור-דוד</h1>
@@ -116,8 +110,7 @@
     <button onclick="zoom(0.12)">זום +</button>
     <button onclick="zoom(-0.12)">זום -</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="secondary" onclick="printPoster('basic')">🖨️ הדפסה בסיסית</button>
-    <button class="primary" onclick="printPoster('advanced')">🖨️ הדפסה מתקדמת</button>
+    <button class="snapshot" onclick="exportTreeAsImage()">📸 שמור כתמונה (PNG)</button>
 </div>
 
 <div class="legend">
@@ -205,5 +198,49 @@
 
 <script src="data.js"></script>
 <script src="script.js"></script>
+<script>
+// פונקציית ייצוא תמונה נקייה של כל העץ
+function exportTreeAsImage() {
+    const loader = document.getElementById('snapshot-loader');
+    loader.style.display = 'flex';
+
+    const canvas = document.getElementById('canvas');
+    const oldTransform = canvas.style.transform;
+    const oldTransition = canvas.style.transition;
+
+    // איפוס זום והזזה לצורך צילום נקי בגודל מלא
+    canvas.style.transition = 'none';
+    canvas.style.transform = 'none';
+    drawSVGConnections();
+
+    setTimeout(() => {
+        html2canvas(canvas, {
+            scale: 2, // איכות גבוהה (Retina)
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#f4f6f9'
+        }).then(renderedCanvas => {
+            // החזרה למצב הקודם של המסך
+            canvas.style.transform = oldTransform;
+            canvas.style.transition = oldTransition;
+            drawSVGConnections();
+            loader.style.display = 'none';
+
+            // הורדת הקובץ אוטומטית למחשב
+            const link = document.createElement('a');
+            link.download = 'family-tree-poster.png';
+            link.href = renderedCanvas.toDataURL('image/png');
+            link.click();
+        }).catch(err => {
+            console.error(err);
+            canvas.style.transform = oldTransform;
+            canvas.style.transition = oldTransition;
+            drawSVGConnections();
+            loader.style.display = 'none';
+            alert('אגיאה ביצירת התמונה. נסה שוב.');
+        });
+    }, 300);
+}
+</script>
 </body>
 </html>
