@@ -2,13 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>עץ שורשים משפחתי משולב</title>
 <!-- טעינת ספריית צילום מסך מתקדמת -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; touch-action: none; }
     .toolbar { position: fixed; top: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.96); padding: 10px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 8px; align-items: center; border: 1px solid #ddd; flex-wrap: wrap; }
     .toolbar h1 { font-size: 15px; color: #222; margin-left: 8px; font-weight: 700; }
     .toolbar button { background: #ffffff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #333; transition: all 0.2s; }
@@ -22,7 +22,7 @@
     .legend-spouse { border: 1.5px dashed #555; background: #fff; }
     .c-landwehr { background-color: #ffe599 !important; border: 2px solid #b45309 !important; }
     
-    #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; }
+    #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; touch-action: none; }
     #viewport.grabbing { cursor: grabbing; }
     #canvas { transform-origin: center top; transition: transform 0.06s ease-out; padding: 100px 100px 220px 100px; display: inline-flex; flex-direction: row; align-items: flex-start; gap: 70px; direction: ltr; position: relative; }
     #svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
@@ -100,23 +100,19 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 עץ שורשים משולב: פוגל-פייגל + לנדוור-דוד</h1>
+    <h1>🌳 עץ שורשים משולב</h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;">מסתנכרן...</div>
-    <button class="accent" onclick="resetDefaultView()">תצוגת ברירת מחדל</button>
-    <button onclick="expandAll()">פתח הכל (+)</button>
-    <button onclick="collapseAll()">סגור הכל (-)</button>
-    <button onclick="zoom(0.12)">זום +</button>
-    <button onclick="zoom(-0.12)">זום -</button>
+    <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
+    <button onclick="zoom(0.12)">+</button>
+    <button onclick="zoom(-0.12)">-</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
-    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
+    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור תמונה</button>
 </div>
 
 <div class="legend">
-    <div class="legend-item"><span class="legend-box legend-blood"></span><span><b>מסגרת רציפה:</b> צאצא ביולוגי</span></div>
-    <div class="legend-item"><span class="legend-box legend-spouse"></span><span><b>מסגרת מקווקוות:</b> בן/בת זוג</span></div>
-    <div class="legend-item"><span class="legend-box c-landwehr"></span><span><b>מימין בצהוב:</b> אגף לנדוור</span></div>
-    <div class="legend-item"><span>✡️ <b>סמל מגן דוד:</b> נרצחו בשואה</span></div>
+    <div class="legend-item"><span class="legend-box legend-blood"></span><span><b>צאצא ביולוגי</b></span></div>
+    <div class="legend-item"><span class="legend-box legend-spouse"></span><span><b>בן/בת זוג</b></span></div>
+    <div class="legend-item"><span>✡️ <b>נרצחו בשואה</b></span></div>
 </div>
 
 <div id="viewport">
@@ -127,7 +123,7 @@
             <div class="tree" id="treeFogel"></div>
         </div>
         <div id="landwehrWingWrapper" style="display:flex; flex-direction:column; align-items:center;">
-            <div class="wing-title" style="background:#ffe599; border-color:#b45309;">משפחת לנדוור, קראפט ודוד (הצד של אמא נאוה)</div>
+            <div class="wing-title" style="background:#ffe599; border-color:#b45309;">משפחת לנדוור, קראפט ודוד</div>
             <div class="tree" id="treeLandwehr"></div>
         </div>
     </div>
@@ -198,6 +194,47 @@
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
+// תמיכה מלאה במגע (טאץ' ומולטי-טאץ') למובייל
+const viewport = document.getElementById('viewport');
+let initialDistance = null;
+
+viewport.addEventListener('touchstart', (e) => {
+    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) return;
+    
+    if (e.touches.length === 1) {
+        isPanning = true;
+        startX = e.touches[0].clientX - pointX;
+        startY = e.touches[0].clientY - pointY;
+    } else if (e.touches.length === 2) {
+        isPanning = false;
+        initialDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+    }
+}, {passive: true});
+
+viewport.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && isPanning) {
+        pointX = e.touches[0].clientX - startX;
+        pointY = e.touches[0].clientY - startY;
+        updateTransform();
+    } else if (e.touches.length === 2 && initialDistance !== null) {
+        const currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        const delta = (currentDistance - initialDistance) * 0.005;
+        zoom(delta);
+        initialDistance = currentDistance;
+    }
+}, {passive: true});
+
+viewport.addEventListener('touchend', (e) => {
+    if (e.touches.length < 1) isPanning = false;
+    if (e.touches.length < 2) initialDistance = null;
+});
+
 function exportTreeAsImage(mode) {
     const loader = document.getElementById('snapshot-loader');
     loader.style.display = 'flex';
@@ -214,7 +251,6 @@ function exportTreeAsImage(mode) {
     canvas.style.transform = 'none';
     if (typeof drawSVGConnections === 'function') drawSVGConnections();
 
-    // השהייה ממושכת שמוודאת שהתמונות מהענן והקווים נטענים וממוקמים עד הסוף לפני הצילום
     setTimeout(() => {
         html2canvas(canvas, {
             scale: 2,
