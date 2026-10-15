@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f4f6f9; direction: rtl; overflow: hidden; height: 100vh; width: 100vw; user-select: none; touch-action: none; }
     .toolbar { position: fixed; top: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.96); padding: 10px 16px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; gap: 8px; align-items: center; border: 1px solid #ddd; flex-wrap: wrap; }
     .toolbar h1 { font-size: 15px; color: #222; margin-left: 8px; font-weight: 700; }
     .toolbar .version-badge { font-size: 11px; background: #e2e8f0; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 6px; }
@@ -23,7 +23,7 @@
     .legend-spouse { border: 1.5px dashed #555; background: #fff; }
     .c-landwehr { background-color: #ffe599 !important; border: 2px solid #b45309 !important; }
     
-    #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; touch-action: pan-x pan-y; }
+    #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; touch-action: none; }
     #viewport.grabbing { cursor: grabbing; }
     #canvas { transform-origin: center top; transition: transform 0.06s ease-out; padding: 100px 100px 220px 100px; display: inline-flex; flex-direction: row; align-items: flex-start; gap: 70px; direction: ltr; position: relative; }
     #svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
@@ -91,9 +91,21 @@
     .edit-btn { background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; }
     .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
 
+    /* עיצוב חלונית מצב הורדה */
     #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; padding: 20px; }
     .loader-spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* עיצוב חלון הפוסטר המוכן */
+    #download-modal { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.92); z-index:10000; flex-direction:column; align-items:center; justify-content:center; color:white; }
+    #download-modal h2 { margin-bottom: 10px; font-size: 24px; color: #fff; }
+    #download-modal p { margin-bottom: 25px; text-align:center; max-width:85%; font-size: 15px; line-height: 1.5; color: #ddd; }
+    #download-preview-img { max-width:90vw; max-height:55vh; border:3px solid white; border-radius:8px; margin-bottom:25px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); object-fit: contain; background: #f4f6f9; }
+    .download-actions { display:flex; gap:15px; }
+    .download-actions a { background:#10b981; padding:12px 24px; text-decoration:none; color:white; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer; }
+    .download-actions button { background:#f44336; padding:12px 24px; border:none; color:white; border-radius:8px; font-weight:bold; font-size:16px; cursor:pointer; }
+
+    body.print-basic img { display: none !important; }
 </style>
 </head>
 <body>
@@ -103,8 +115,21 @@
     <div id="loader-text">מייצר תמונה איכותית של העץ, רגע אחד... 📸</div>
 </div>
 
+<div id="download-modal">
+    <h2>הפוסטר מוכן! 📸</h2>
+    <p>
+        <b>במובייל:</b> לחיצה ארוכה על התמונה כאן למטה ➔ "שמור בתמונות" / "Add to Photos"<br>
+        <b>במחשב:</b> לחץ על הכפתור הירוק למטה להורדה חופשית.
+    </p>
+    <img id="download-preview-img" src="">
+    <div class="download-actions">
+        <a id="download-preview-link" href="" download="">⬇️ הורד קובץ</a>
+        <button onclick="document.getElementById('download-modal').style.display='none'">סגור</button>
+    </div>
+</div>
+
 <div class="toolbar">
-    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v2.1</span></h1>
+    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v2.2</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;">מסתנכרן...</div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="zoom(0.12)">+</button>
@@ -199,14 +224,15 @@
 <script src="data.js"></script>
 <script src="script.js"></script>
 <script>
-// ניהול מגע משופר למובייל (גרירה, זום בצביטה, ושמירת תקינות לחיצות)
+// ניהול מגע משופר למובייל: מניעת התנגשויות גלילה
 const viewport = document.getElementById('viewport');
 let initialDistance = null;
 let touchStartX = 0;
 let touchStartY = 0;
+let isPanning = false;
 
 viewport.addEventListener('touchstart', (e) => {
-    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content')) return;
+    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content') || e.target.closest('#download-modal')) return;
     
     if (e.touches.length === 1) {
         isPanning = true;
@@ -221,9 +247,16 @@ viewport.addEventListener('touchstart', (e) => {
             e.touches[0].clientY - e.touches[1].clientY
         );
     }
-}, {passive: true});
+}, {passive: false});
 
 viewport.addEventListener('touchmove', (e) => {
+    if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#modal-content') || e.target.closest('#download-modal')) return;
+    
+    if (!isPanning && initialDistance === null) return;
+    
+    // חסימת גלילה טבעית של הדפדפן כדי שהגרירה והזום יעבדו חלק במובייל
+    e.preventDefault(); 
+
     if (e.touches.length === 1 && isPanning) {
         pointX = e.touches[0].clientX - startX;
         pointY = e.touches[0].clientY - startY;
@@ -237,13 +270,14 @@ viewport.addEventListener('touchmove', (e) => {
         zoom(delta);
         initialDistance = currentDistance;
     }
-}, {passive: true});
+}, {passive: false});
 
 viewport.addEventListener('touchend', (e) => {
     if (e.touches.length < 1) isPanning = false;
     if (e.touches.length < 2) initialDistance = null;
 });
 
+// יצוא התמונה עם טיפול מלא בחסימות מובייל
 function exportTreeAsImage(mode) {
     const loader = document.getElementById('snapshot-loader');
     const loaderText = document.getElementById('loader-text');
@@ -265,10 +299,9 @@ function exportTreeAsImage(mode) {
     setTimeout(() => {
         loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
         html2canvas(canvas, {
-            scale: 2,
+            scale: window.devicePixelRatio > 1 ? 2 : 1,
             useCORS: true,
-            allowTaint: false,
-            logging: false,
+            allowTaint: true,
             backgroundColor: '#f4f6f9'
         }).then(renderedCanvas => {
             canvas.style.transform = oldTransform;
@@ -276,22 +309,25 @@ function exportTreeAsImage(mode) {
             if (typeof drawSVGConnections === 'function') drawSVGConnections();
             document.body.classList.remove('print-basic');
             
-            loaderText.textContent = "מוריד את התמונה למכשירך! 🎉";
+            loaderText.textContent = "מסיים עיבוד...";
 
-            setTimeout(() => {
+            try {
+                // המרת הקנבס לתמונה
+                const imageURL = renderedCanvas.toDataURL('image/png');
+                const filename = mode === 'basic' ? 'family-tree-v2.2-basic.png' : 'family-tree-v2.2-advanced.png';
+                
+                // במקום לנסות להוריד בכוח ולקבל חסימה, אנחנו פותחים פופ-אפ גדול למשתמש
+                document.getElementById('download-preview-img').src = imageURL;
+                document.getElementById('download-preview-link').href = imageURL;
+                document.getElementById('download-preview-link').download = filename;
+                
                 loader.style.display = 'none';
-            }, 600);
-
-            const imageURL = renderedCanvas.toDataURL('image/png');
-            const filename = mode === 'basic' ? 'family-tree-v2.1-basic.png' : 'family-tree-v2.1-advanced.png';
-            
-            const downloadLink = document.createElement('a');
-            downloadLink.href = imageURL;
-            downloadLink.download = filename;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-
+                document.getElementById('download-modal').style.display = 'flex';
+            } catch (e) {
+                // אם גוגל דרייב חסם את משיכת התמונות בגלל CORS
+                alert("שגיאת אבטחה (CORS): הדפדפן חסם את ההורדה בגלל התמונות המקושרות. נסה לשמור כ-'פוסטר בסיסי' ללא תמונות.");
+                loader.style.display = 'none';
+            }
         }).catch(err => {
             console.error(err);
             canvas.style.transform = oldTransform;
@@ -299,9 +335,9 @@ function exportTreeAsImage(mode) {
             if (typeof drawSVGConnections === 'function') drawSVGConnections();
             document.body.classList.remove('print-basic');
             loader.style.display = 'none';
-            alert('שגיאה ביצירת התמונה. נסה שוב.');
+            alert('שגיאה ביצירת התמונה: ' + err.message);
         });
-    }, 1500);
+    }, 1000);
 }
 </script>
 </body>
