@@ -1,7 +1,7 @@
-// Version: v4.1 Archive
+// Version: v4.2 Entities
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE & CONTEXT MENU & ARCHIVE
+   CLOUD DATABASE OVERRIDE & CONTEXT MENU
 ========================================= */
 
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZDjVPjnW_-kTHSSD0ccBX4ez-y9QrQ7M7Vmmg4WDZnPhC5YQr4VxbGyqXrBh4iaHbwg/exec';
@@ -35,24 +35,91 @@ let contextTargetId = null;
 let svgConnections = [];
 let scale = 0.55, pointX = 0, pointY = 0;
 
+// בניית מילון חכם לחיפוש אנשים מהענן לפי מזהים או שמות (כולל את הישויות המרחפות)
+function buildCloudMap(cloudData, mapById, mapByName) {
+    if (!cloudData) return;
+    const add = p => {
+        if (!p) return;
+        if (p.id && !p.id.startsWith('node-')) mapById.set(p.id, p);
+        if (p.heb) {
+            if (p.originalHeb) mapByName.set(p.originalHeb.trim(), p);
+            mapByName.set(getCleanName(p.heb), p);
+        }
+        if (p.floatingParents) p.floatingParents.forEach(add);
+        if (p.floatingSiblings) p.floatingSiblings.forEach(add);
+    };
+    if (cloudData.blood) add(cloudData.blood);
+    if (cloudData.spouse) add(cloudData.spouse);
+    if (cloudData.nodes) cloudData.nodes.forEach(add);
+    if (cloudData.children) cloudData.children.forEach(c => buildCloudMap(c, mapById, mapByName));
+}
+
+// שפיכת הנתונים מהענן לתוך המבנה המקומי של data.js 
+function applyCloudDataToLocal(localData, mapById, mapByName) {
+    if (!localData) return;
+    if (Array.isArray(localData)) {
+        localData.forEach(item => applyCloudDataToLocal(item.tree || item, mapById, mapByName));
+        return;
+    }
+
+    const updatePerson = p => {
+        if (!p) return;
+        let cloudMatch = null;
+        if (p.id && !p.id.startsWith('node-')) cloudMatch = mapById.get(p.id);
+        if (!cloudMatch && p.heb) cloudMatch = mapByName.get(getCleanName(p.heb));
+        
+        if (cloudMatch) {
+            const fields = ['heb', 'eng', 'birth', 'death', 'gender', 'customImage', 'perished', 'images', 'files', 'stories', 'tag', 'originalHeb'];
+            fields.forEach(f => {
+                if (cloudMatch[f] !== undefined && cloudMatch[f] !== null && cloudMatch[f] !== "") {
+                    if (f === 'customImage' && cloudMatch[f].includes('undefined')) return;
+                    p[f] = cloudMatch[f];
+                }
+            });
+        }
+        if (p.floatingParents) p.floatingParents.forEach(updatePerson);
+        if (p.floatingSiblings) p.floatingSiblings.forEach(updatePerson);
+    };
+
+    if(localData.blood) updatePerson(localData.blood);
+    if(localData.spouse) updatePerson(localData.spouse);
+    if(localData.nodes) localData.nodes.forEach(updatePerson);
+    if(localData.children) localData.children.forEach(c => applyCloudDataToLocal(c, mapById, mapByName));
+}
+
 fetch(WEB_APP_URL)
     .then(r => r.json())
     .then(data => {
-        if(data && data.fogel && data.landwehr) {
-            treeDataFogel = data.fogel;
-            treeDataLandwehr = data.landwehr;
-            document.getElementById('loadingStatus').textContent = 'מחובר למסד הנתונים בענן ☁️';
+        const dataString = JSON.stringify(data);
+        const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור');
+        
+        if(data && data.fogel && data.landwehr && !hasOldLocalLinks) {
+            const mapById = new Map();
+            const mapByName = new Map();
+            
+            const processCloud = (c) => {
+                if (Array.isArray(c)) c.forEach(item => buildCloudMap(item.tree || item, mapById, mapByName));
+                else buildCloudMap(c, mapById, mapByName);
+            };
+            
+            processCloud(data.fogel);
+            processCloud(data.landwehr);
+
+            applyCloudDataToLocal(treeDataFogel, mapById, mapByName);
+            applyCloudDataToLocal(treeDataLandwehr, mapById, mapByName);
+            
+            document.getElementById('loadingStatus').textContent = 'סונכרן מהענן בהצלחה ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
-            document.getElementById('loadingStatus').textContent = 'מסד נתונים חדש נוצר ☁️';
+            document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         }
         document.getElementById('initial-loader').style.display = 'none';
         renderTree();
     }).catch(e => {
         console.error("Fetch Error:", e);
-        document.getElementById('loadingStatus').textContent = 'מערכת במצב לא מקוון ⚠️';
+        document.getElementById('loadingStatus').textContent = 'עובד ללא סנכרון ⚠️';
         document.getElementById('initial-loader').style.display = 'none';
         renderTree();
     });
@@ -74,7 +141,8 @@ function renderTree() {
     setTimeout(() => { fitToScreen(); }, 100);
 }
 
-function createPersonBox(personData, roleClass, colorClass) {
+// יצירת קופסאות. includes special logic for recursive floating entities
+function createPersonBox(personData, roleClass, colorClass, isFloating = false) {
     const div = document.createElement('div');
     const extraClass = personData.cousinWife ? 'cousin-wife' : '';
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
@@ -105,6 +173,60 @@ function createPersonBox(personData, roleClass, colorClass) {
     let starHtml = personData.perished ? `<div class="holocaust-icon" title="נרצח/ה בשואה"></div>` : '';
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
+    
+    // ציור הישויות המרחפות אם יש (הורים של חתן/כלה, אחים של חתן/כלה) - רק אם התיבה הנוכחית לא מרחפת בעצמה
+    if (!isFloating) {
+        if (personData.floatingParents && personData.floatingParents.length === 2) {
+            const fpContainer = document.createElement('div');
+            fpContainer.style.position = 'absolute';
+            fpContainer.style.top = '-105px';
+            fpContainer.style.left = '50%';
+            fpContainer.style.transform = 'translateX(-50%)';
+            fpContainer.style.display = 'flex';
+            fpContainer.style.alignItems = 'center';
+            fpContainer.style.gap = '0';
+            fpContainer.style.zIndex = '10';
+            fpContainer.style.direction = 'rtl';
+            
+            const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass, true);
+            p1.style.minWidth = '80px'; p1.style.maxWidth = '90px'; p1.style.padding = '5px';
+            
+            const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass, true);
+            p2.style.minWidth = '80px'; p2.style.maxWidth = '90px'; p2.style.padding = '5px';
+            
+            const line = document.createElement('div');
+            line.style.width = '20px'; line.style.height = '2px'; line.style.background = '#475569';
+            
+            fpContainer.appendChild(p1); fpContainer.appendChild(line); fpContainer.appendChild(p2);
+            
+            const vertLine = document.createElement('div');
+            vertLine.style.position = 'absolute'; vertLine.style.top = '-40px'; vertLine.style.left = '50%';
+            vertLine.style.width = '2px'; vertLine.style.height = '45px'; vertLine.style.background = '#475569';
+            vertLine.style.transform = 'translateX(-50%)'; vertLine.style.zIndex = '9';
+            
+            div.appendChild(fpContainer);
+            div.appendChild(vertLine);
+        }
+
+        if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
+            const sib = personData.floatingSiblings[0];
+            const sibBox = createPersonBox(sib, 'blood', colorClass, true);
+            sibBox.style.position = 'absolute';
+            sibBox.style.top = '50%';
+            sibBox.style.left = '-120px'; 
+            sibBox.style.transform = 'translateY(-50%)';
+            sibBox.style.minWidth = '80px'; sibBox.style.maxWidth = '90px'; sibBox.style.padding = '5px';
+            sibBox.style.zIndex = '10';
+            
+            const horizLine = document.createElement('div');
+            horizLine.style.position = 'absolute'; horizLine.style.top = '50%'; horizLine.style.left = '-35px';
+            horizLine.style.width = '40px'; horizLine.style.height = '2px'; horizLine.style.background = '#475569';
+            horizLine.style.zIndex = '9';
+
+            div.appendChild(sibBox);
+            div.appendChild(horizLine);
+        }
+    }
     
     div.addEventListener('click', (e) => { e.stopPropagation(); openModal(personData); });
     div.addEventListener('contextmenu', (e) => {
@@ -477,14 +599,8 @@ async function saveEdit() {
     if (!currentEditingPerson.originalHeb) {
         currentEditingPerson.originalHeb = getCleanName(currentEditingPerson.heb);
     }
-
-    if(currentEditingPerson.heb && currentEditingPerson.heb.includes('<div')) {
-        let htmlPart = currentEditingPerson.heb.substring(currentEditingPerson.heb.indexOf('<div'));
-        currentEditingPerson.heb = newHeb + "\n" + htmlPart;
-    } else {
-        currentEditingPerson.heb = newHeb;
-    }
-
+    currentEditingPerson.heb = newHeb;
+    
     currentEditingPerson.eng = document.getElementById('editNameEng').value;
     currentEditingPerson.birth = document.getElementById('editBirth').value;
     currentEditingPerson.death = document.getElementById('editDeath').value;
@@ -507,7 +623,6 @@ async function saveEdit() {
             const file = fileInput.files[0];
             const base64 = await compressImage(file);
             
-            // משיכת מזהה התמונה הישנה (לצורך העברה לארכיון בענן)
             let oldImg = currentEditingPerson.customImage || (currentEditingPerson.images && currentEditingPerson.images.length > 0 ? currentEditingPerson.images[0] : null);
             let oldImgId = null;
             if (oldImg) {
