@@ -182,7 +182,7 @@ function createPersonBox(personData, roleClass, colorClass) {
     let datesHtml = '';
     let b = personData.birth ? personData.birth.trim() : '';
     let d = personData.death ? personData.death.trim() : '';
-    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} -${d}` : b}</div>`;
+    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} - ${d}` : b}</div>`;
     
     let starHtml = personData.perished ? `<div class="holocaust-icon" title="נרצח/ה בשואה"></div>` : '';
     
@@ -344,6 +344,7 @@ function drawSVGConnections() {
         drawOrthogonalTreeLines(conn.parentElId, conn.childElIds, 32, '#222', '2', null);
     });
 
+    // Special cousin/family lines
     drawOrthogonalTreeLines('bridge-fredel-josef', ['box-mina', 'box-inda-lea'], 58, '#111111', '2', null);
     drawOrthogonalTreeLines('bridge-landwehr-parents', ['box-sima', 'box-nava'], 40, '#b45309', '2.8', null);
 }
@@ -357,7 +358,11 @@ if (typeof ResizeObserver !== 'undefined' && canvasEl) {
 function openModal(person) {
     currentEditingPerson = person;
     
-    const cleanName = getCleanName(person.heb);
+    // Handle inline HTML in name (like the floating parents)
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = person.heb;
+    const cleanName = tempDiv.childNodes[0].nodeValue ? tempDiv.childNodes[0].nodeValue.trim() : tempDiv.innerText.trim();
+    
     document.getElementById('modal-title').textContent = cleanName + (person.eng ? ` (${person.eng})` : '');
     document.getElementById('modal-story').innerHTML = person.story || 'אין הערות מחקר ספציפיות נוספות עבור כרטיס זה.';
     
