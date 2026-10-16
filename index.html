@@ -22,9 +22,9 @@
     .legend-spouse { border: 1.5px dashed #555; background: #fff; }
     .c-landwehr { background-color: #ffe599 !important; border: 2px solid #b45309 !important; }
     
-    #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; touch-action: none; }
+    #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; padding: 80px 50px; touch-action: none; }
     #viewport.grabbing { cursor: grabbing; }
-    #canvas { transform-origin: center top; transition: transform 0.06s ease-out; padding: 100px 100px 220px 100px; display: inline-flex; flex-direction: row; align-items: flex-start; gap: 70px; direction: ltr; position: relative; }
+    #canvas { transform-origin: center top; transition: transform 0.06s ease-out; display: inline-flex; flex-direction: row; align-items: flex-start; gap: 70px; direction: ltr; position: relative; }
     #svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
     
     .tree { display: inline-block; direction: ltr; position: relative; z-index: 2; }
@@ -36,7 +36,7 @@
     .wing-title { direction: rtl; text-align: center; font-weight: 800; font-size: 16px; padding: 6px 18px; border-radius: 8px; margin-bottom: 14px; background: #fff; border: 2px solid #444; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     .family-unit { display: inline-flex; align-items: center; justify-content: center; position: relative; direction: ltr; padding: 2px; border-radius: 8px; }
     
-    .person { direction: rtl; padding: 7px 10px; color: #111; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fff; min-width: 88px; max-width: 138px; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; transition: transform 0.15s, box-shadow 0.15s; text-align: center; line-height: 1.2; cursor: pointer; z-index: 5; border-radius: 4px; }
+    .person { direction: rtl; padding: 7px 10px; color: #111; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fff; min-width: 90px; max-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; transition: transform 0.15s, box-shadow 0.15s; text-align: center; line-height: 1.2; cursor: pointer; z-index: 5; border-radius: 4px; }
     .person.male-node { border-radius: 0 !important; }
     .person.female-node { border-radius: 20px !important; }
     .person.blood { border: 2px solid #111 !important; font-weight: 700; z-index: 6; }
@@ -70,7 +70,6 @@
     .c-grey { background-color: #e0e0e0 !important; }
     .c-gold { background-color: #ffc000 !important; }
     .c-violet { background-color: #eca1ff !important; }
-    .c-dawid { background-color: #ffd966 !important; }
 
     #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
     #modal-content { background: #fff; width: 680px; max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; touch-action: auto; }
@@ -90,18 +89,13 @@
     .edit-btn { background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; }
     .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
 
-    /* הודעת טעינה לתמונה */
-    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; padding: 20px; }
-    
-    /* מסך טעינה התחלתי לסנכרון מהענן */
     #initial-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f4f6f9; z-index: 9998; display: flex; justify-content: center; align-items: center; color: #1e40af; font-size: 20px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; }
+    #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; padding: 20px; }
     .loader-spinner { width: 50px; height: 50px; border: 5px solid rgba(30,64,175,0.2); border-radius: 50%; border-top-color: #1e40af; animation: spin 1s ease-in-out infinite; }
     #snapshot-loader .loader-spinner { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* פתרון באג הצללים */
     body.printing-export * { box-shadow: none !important; }
-    
     body.print-basic .person img { display: none !important; }
     body.print-basic .node-dates { display: none !important; }
     body.printing-export .toggle-badge, body.printing-export .has-media { display: none !important; }
@@ -111,7 +105,7 @@
 
 <div id="initial-loader">
     <div class="loader-spinner"></div>
-    <div>טוען ומסנכרן נתונים מהענן... ⏳</div>
+    <div>טוען ומסנכרן את הנתונים מהענן... ⏳</div>
 </div>
 
 <div id="snapshot-loader">
@@ -120,13 +114,11 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 עץ משפחת פוגל המורחבת <span class="version-badge">v2.8</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v3.1 Smart</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
     <button onclick="collapseAll()">סגור הכל (-)</button>
-    <button onclick="zoom(0.12)">זום +</button>
-    <button onclick="zoom(-0.12)">זום -</button>
     <button onclick="fitToScreen()">התאם למסך</button>
     <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
     <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
@@ -141,14 +133,19 @@
 <div id="viewport">
     <div id="canvas">
         <svg id="svg-lines"></svg>
+        
+        <!-- ענף פוגל -->
         <div style="display:flex; flex-direction:column; align-items:center;">
             <div class="wing-title" style="visibility:hidden; padding: 6px 18px; margin-bottom: 14px;">Spacer</div>
             <div class="tree" id="treeFogel"></div>
         </div>
+        
+        <!-- ענף לנדוור -->
         <div id="landwehrWingWrapper" style="display:flex; flex-direction:column; align-items:center;">
-            <div class="wing-title" style="background:#ffe599; border-color:#b45309;">משפחת לנדוור, קראפט ודוד</div>
+            <div class="wing-title" style="background:#ffe599; border-color:#b45309;">משפחת לנדוור וקראפט</div>
             <div class="tree" id="treeLandwehr"></div>
         </div>
+
     </div>
 </div>
 
