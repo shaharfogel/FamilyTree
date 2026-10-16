@@ -1,3 +1,4 @@
+// Version: v3.2 Smart
 /* =========================================
    LOGIC SECTION (App functionality)
    WITH SMART MERGE ALGORITHM
