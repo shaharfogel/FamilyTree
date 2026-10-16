@@ -1,10 +1,10 @@
-<!-- Version: v3.2 Smart -->
+<!-- Version: v4.2 Entities -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>עץ משפחת פוגל המורחבת</title>
+<title>עץ משפחת פוגל - מערכת חיפוש ועריכה מלאה</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,6 +16,7 @@
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
     .toolbar button.secondary { background: #10b981; color: white; border-color: #059669; }
+    
     .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; max-width: calc(100vw - 30px); }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .legend-box { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
@@ -25,7 +26,7 @@
     
     #viewport { width: 100vw; height: 100vh; overflow: hidden; cursor: grab; display: flex; justify-content: center; align-items: flex-start; padding: 80px 50px; touch-action: none; }
     #viewport.grabbing { cursor: grabbing; }
-    #canvas { transform-origin: center top; transition: transform 0.06s ease-out; display: inline-flex; flex-direction: row; align-items: flex-start; gap: 70px; direction: ltr; position: relative; }
+    #canvas { transform-origin: center top; transition: transform 0.06s ease-out; display: inline-flex; flex-direction: row; align-items: flex-start; gap: 70px; direction: ltr; position: relative; padding-bottom: 200px; padding-top: 100px;}
     #svg-lines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
     
     .tree { display: inline-block; direction: ltr; position: relative; z-index: 2; }
@@ -50,10 +51,8 @@
     .person .eng { font-size: 9.5px; color: #111; font-weight: 600; direction: ltr; }
     .node-dates { font-size: 9.5px; margin-top: 3px; font-weight: 700; color: #444; direction: ltr; }
     .person .tag { font-size: 8px; background: rgba(0,0,0,0.14); padding: 1px 5px; border-radius: 3px; margin-top: 3px; color: #000; font-weight: 700; }
-    .person .has-media { font-size: 8px; color: #1d4ed8; background: rgba(255,255,255,0.75); padding: 1px 4px; border-radius: 3px; margin-top: 3px; font-weight: 700; }
     
     .marriage-bridge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 3px; min-width: 52px; position: relative; }
-    .marriage-bridge .m-text { font-size: 7.5px; color: #000; font-weight: 700; white-space: nowrap; line-height: 1.05; }
     .marriage-bridge .m-line { width: 100%; height: 1.8px; background-color: #111; margin: 2px 0; }
     
     .toggle-badge { position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; font-weight: 700; width: 19px; height: 19px; line-height: 16px; text-align: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 15; cursor: pointer; }
@@ -61,16 +60,17 @@
     li.collapsed > .family-unit { background: rgba(0,0,0,0.06); box-shadow: 0 0 0 2px rgba(0,0,0,0.18); }
     
     .c-root { background-color: #fff200 !important; }
-    .c-olive { background-color: #d4cf37 !important; }
     .c-pink { background-color: #ff6699 !important; }
-    .c-peach { background-color: #f8cbad !important; }
     .c-green { background-color: #66ff33 !important; }
-    .c-sage { background-color: #92d050 !important; }
-    .c-purple { background-color: #d86ecc !important; }
     .c-blue { background-color: #5ce1e6 !important; }
-    .c-grey { background-color: #e0e0e0 !important; }
     .c-gold { background-color: #ffc000 !important; }
-    .c-violet { background-color: #eca1ff !important; }
+    
+    /* Context Menu CSS */
+    #context-menu { display: none; position: fixed; background: #fff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border: 1px solid #cbd5e1; padding: 6px 0; z-index: 10000; min-width: 170px; direction: rtl; }
+    #context-menu div { padding: 10px 20px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #1e293b; transition: background 0.2s; }
+    #context-menu div:hover { background: #f1f5f9; color: #2563eb; }
+    #context-menu .danger { color: #dc2626; border-top: 1px solid #e2e8f0; margin-top: 4px; padding-top: 10px; }
+    #context-menu .danger:hover { background: #fee2e2; color: #b91c1c; }
 
     #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
     #modal-content { background: #fff; width: 680px; max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; touch-action: auto; }
@@ -78,51 +78,46 @@
     #modal-header h2 { font-size: 18px; margin: 0; display: inline-block; }
     #modal-close { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; }
     #modal-body, #modal-edit { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; text-align: right; direction: rtl; -webkit-overflow-scrolling: touch; }
-    .modal-section { background: #f8f9fa; padding: 12px 14px; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .modal-section h3 { font-size: 14px; color: #1e40af; margin-bottom: 8px; }
-    .modal-section p { font-size: 13.5px; color: #222; line-height: 1.55; white-space: pre-line; }
-    .modal-img-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-    .modal-img { max-width: 100%; max-height: 280px; border-radius: 6px; border: 1px solid #cbd5e1; object-fit: contain; background: #fff; padding: 4px; }
-    .file-link { display: block; background: #e2e8f0; padding: 7px 10px; border-radius: 5px; font-size: 13px; color: #0f172a; margin: 4px 0; text-decoration: none; border: 1px solid #cbd5e1; font-weight: 500; }
-    .file-link:hover { background: #cbd5e1; }
     
-    #modal-edit input[type="text"], #modal-edit input[type="file"] { width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 5px; }
-    .edit-btn { background: #4CAF50; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; }
-    .cancel-btn { background: #f44336; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: 700; }
+    .modal-section { background: #f8f9fa; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .modal-section h3 { font-size: 14px; color: #1e40af; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; display: inline-block; }
+    
+    .story-item { background: #fff; border: 1px solid #cbd5e1; border-right: 4px solid #facc15; padding: 12px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    .story-item .story-date { font-size: 11px; color: #64748b; font-weight: bold; margin-bottom: 6px; }
+    .story-item .story-text { font-size: 13.5px; color: #1e293b; line-height: 1.6; white-space: pre-wrap; }
+
+    #modal-edit input[type="text"], #modal-edit textarea, #modal-edit input[type="file"] { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; }
+    .edit-btn { background: #10b981; color: #fff; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 700; font-size: 14px; }
+    .cancel-btn { background: #ef4444; color: #fff; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 700; font-size: 14px; }
 
     #initial-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #f4f6f9; z-index: 9998; display: flex; justify-content: center; align-items: center; color: #1e40af; font-size: 20px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; }
     #snapshot-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; flex-direction: column; gap: 20px; text-align: center; padding: 20px; }
     .loader-spinner { width: 50px; height: 50px; border: 5px solid rgba(30,64,175,0.2); border-radius: 50%; border-top-color: #1e40af; animation: spin 1s ease-in-out infinite; }
-    #snapshot-loader .loader-spinner { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
+    
     body.printing-export * { box-shadow: none !important; }
-    body.print-basic .person img { display: none !important; }
-    body.print-basic .node-dates { display: none !important; }
-    body.printing-export .toggle-badge, body.printing-export .has-media { display: none !important; }
+    body.printing-export .toggle-badge { display: none !important; }
 </style>
 </head>
 <body>
 
 <div id="initial-loader">
     <div class="loader-spinner"></div>
-    <div>טוען ומסנכרן את הנתונים מהענן... ⏳</div>
+    <div>טוען ומסנכרן את מסד הנתונים בענן... ⏳</div>
 </div>
 
 <div id="snapshot-loader">
     <div class="loader-spinner"></div>
-    <div id="loader-text">מייצר תמונה איכותית של העץ, רגע אחד... 📸</div>
+    <div id="loader-text">מצלם פוסטר איכותי של העץ... 📸</div>
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v3.2 Smart</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v4.2 Entities</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
     <button onclick="collapseAll()">סגור הכל (-)</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
-    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
+    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר</button>
 </div>
 
 <div class="legend">
@@ -134,20 +129,21 @@
 <div id="viewport">
     <div id="canvas">
         <svg id="svg-lines"></svg>
-        
-        <!-- ענף פוגל -->
         <div style="display:flex; flex-direction:column; align-items:center;">
             <div class="wing-title" style="visibility:hidden; padding: 6px 18px; margin-bottom: 14px;">Spacer</div>
             <div class="tree" id="treeFogel"></div>
         </div>
-        
-        <!-- ענף לנדוור -->
         <div id="landwehrWingWrapper" style="display:flex; flex-direction:column; align-items:center;">
             <div class="wing-title" style="background:#ffe599; border-color:#b45309;">משפחת לנדוור וקראפט</div>
             <div class="tree" id="treeLandwehr"></div>
         </div>
-
     </div>
+</div>
+
+<div id="context-menu">
+    <div onclick="contextAddChild()">➕ הוסף ילד/ה חדש/ה</div>
+    <div onclick="contextAddSpouse()">💍 הוסף בן/בת זוג</div>
+    <div class="danger" onclick="contextDeleteNode()">🗑️ מחק אדם מהעץ...</div>
 </div>
 
 <div id="modal-overlay" onclick="closeModal()">
@@ -155,7 +151,7 @@
         <div id="modal-header">
             <div>
                 <h2 id="modal-title">פרטי בן משפחה</h2>
-                <button id="modal-edit-btn" onclick="enterEditMode()" style="background: none; border: none; font-size: 18px; cursor: pointer; margin-right: 15px; color: white;" title="ערוך פרטים">✏️ ערוך</button>
+                <button onclick="enterEditMode()" style="background: none; border: none; font-size: 18px; cursor: pointer; margin-right: 15px; color: white;" title="ערוך פרטים">✏️ ערוך</button>
             </div>
             <button id="modal-close" onclick="closeModal()">✕</button>
         </div>
@@ -166,21 +162,14 @@
             </div>
             <div id="modal-dates" style="text-align:center; font-weight:700; color:#555; margin-bottom:10px;"></div>
             
-            <div class="modal-section">
-                <h3>📜 סיפור, תיעוד וממצאי מחקר</h3>
-                <p id="modal-story"></p>
+            <div class="modal-section" id="stories-section" style="display:none;">
+                <h3>📖 יומן סיפורים, תיעוד וזיכרונות</h3>
+                <div id="modal-stories-list"></div>
             </div>
+            
             <div class="modal-section" id="image-section" style="display:none;">
                 <h3>🖼️ תמונות ודיוקנאות מתוך הארכיון</h3>
                 <div id="modal-images" class="modal-img-grid"></div>
-            </div>
-            <div class="modal-section">
-                <h3>📁 מסמכים, דפי עד וקישורים ישירים</h3>
-                <div id="modal-files"></div>
-            </div>
-            <div class="modal-section">
-                <h3>📚 קבצי מחקר ואינדקס כלליים</h3>
-                <div id="global-files"></div>
             </div>
         </div>
 
@@ -189,9 +178,11 @@
             <input type="text" id="editNameHeb">
             <label>שם באנגלית (לא חובה):</label>
             <input type="text" id="editNameEng">
-            <label>העלאת תמונת פרופיל:</label>
+            
+            <label>העלאת תמונה עדכנית לדרייב (תדרוס תמונה ישנה ותעביר אותה לארכיון):</label>
             <input type="file" id="editImage" accept="image/*">
             <div id="uploadStatus" style="color: green; font-size: 12px; display: none; margin-bottom: 10px;">מעלה...</div>
+            
             <label>שנת לידה / תאריך:</label>
             <input type="text" id="editBirth">
             <label>שנת פטירה (להשאיר ריק אם בחיים):</label>
@@ -205,8 +196,11 @@
             <label style="color: #b83b5e; font-weight: 700; margin-bottom: 15px; display: block; border: 1px solid #b83b5e; padding: 10px; border-radius: 5px;">
                 <input type="checkbox" id="editPerished"> ✡️ נרצח/ה בשואה
             </label>
+            
+            <label>הוסף זיכרון או סיפור חדש ליומן:</label>
+            <textarea id="editNewStory" rows="3" placeholder="כתוב כאן רשמים, סיפורים ותיעוד שיישמר..."></textarea>
 
-            <button class="edit-btn" onclick="saveEdit()">שמור שינויים ☁️</button>
+            <button class="edit-btn" onclick="saveEdit()">שמור הכל במסד הנתונים בענן ☁️</button>
             <button class="cancel-btn" onclick="cancelEdit()">ביטול</button>
         </div>
     </div>
