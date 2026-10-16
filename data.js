@@ -524,7 +524,16 @@ let treeDataFogel = {
                         },
                         {
                             type: "couple", color: "c-pink", defaultExpanded: true, spouseSide: "left",
-                            spouse: { heb: "חיה פוגל", eng: "Chaya Fogel", gender: "female" },
+                            spouse: { 
+                                heb: `חיה פוגל
+                                <div class="person female-node" style="position: absolute; top: 50%; left: -115px; transform: translateY(-50%); min-width: 75px; max-width: 90px; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1.5px solid #475569; background: #fff; cursor: default; z-index: 10; direction: rtl;">
+                                    <div class="heb" style="font-size: 11px; margin:0; color:#111;">אביבה סטולר</div>
+                                    <div class="tag" style="font-size: 8px; margin-top:2px; background: #e2e8f0; border:1px solid #94a3b8; color: #333;">אחות</div>
+                                </div>
+                                <div style="position: absolute; top: 50%; left: -25px; width: 25px; height: 1.5px; background: #475569; z-index: 9;"></div>`,
+                                eng: "Chaya Fogel", 
+                                gender: "female" 
+                            },
                             blood: {
                                 heb: "יוסף (יוסקה) פוגל", eng: "Josef (Yoskeh) Fogel", gender: "male", birth: "1926",
                                 story: "בנם של אליהו והינדה לאה מסארני, ששרד את השואה והגיש את דפי העד על הוריו ואחיותיו.",
@@ -546,7 +555,21 @@ let treeDataFogel = {
                             children: [
                                 {
                                     type: "couple", color: "c-pink", defaultExpanded: true, spouseSide: "left",
-                                    spouse: { heb: "רוזי פוגל", eng: "Rozy Fogel", gender: "female" },
+                                    spouse: { 
+                                        heb: `רוזי פוגל
+                                        <div style="position: absolute; top: -65px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 0; z-index: 10; cursor: default; direction: rtl;">
+                                            <div class="person male-node" style="min-width: 75px; max-width: 90px; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1.5px solid #475569; background: #fff;">
+                                                <div class="heb" style="font-size: 11px; margin:0; color:#111;">משה בכר</div>
+                                            </div>
+                                            <div style="width: 15px; height: 1.5px; background: #475569;"></div>
+                                            <div class="person female-node" style="min-width: 75px; max-width: 90px; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1.5px solid #475569; background: #fff;">
+                                                <div class="heb" style="font-size: 11px; margin:0; color:#111;">ויקי בכר</div>
+                                            </div>
+                                        </div>
+                                        <div style="position: absolute; top: -35px; left: 50%; width: 1.5px; height: 35px; background: #475569; transform: translateX(-50%); z-index: 9;"></div>`,
+                                        eng: "Rozy Fogel", 
+                                        gender: "female" 
+                                    },
                                     blood: {
                                         heb: "ליאור פוגל", eng: "Lior Fogel", gender: "male",
                                         files: [{ name: "מייל והסבר למסמכים 28.01.2022", path: "https://drive.google.com/file/d/1ojHc1E3CI_KPIUA7jNxRCNx7NpWOu6w2/view?usp=drivesdk" }]
@@ -652,7 +675,7 @@ let treeDataLandwehr = [
                     ]
                 },
                 spouse: {
-                    heb: "סבינה לנדוור (דוד)", eng: "Sabina Landwehr (Dawid)", gender: "female", id: "box-sabina", tag: "סבתא של נאוה (אחות של גוסטה)",
+                    heb: "סבינה לנדוור (דוד)", eng: "Sabina Landwehr (Dawid)", gender: "female", id: "box-sabina", tag: "סבתא של נאוה",
                     story: "סבתה של נאוה פוגל. אחותה של גוסטה דוד. שרדה את השואה והגישה דפי עד עבור בעלה משולם ובנה גרשון.",
                     images: ["https://drive.google.com/file/d/1Z3mS10WQ4WAzAmZZ65UnI9GVUbjoXBZB/view?usp=drivesdk"],
                     files: [{ name: "דף הקראת שמות מעודכן עם תמונות (PDF)", path: "https://drive.google.com/file/d/1XSbmG457Ik6_CFm36Pp46rRVbjuYA6LQ/view?usp=drivesdk" }]
@@ -725,46 +748,6 @@ let treeDataLandwehr = [
                         }
                     }
                 ]
-            }
-        ]
-    },
-    {
-        type: "couple", color: "c-dawid", defaultExpanded: true, spouseSide: "right", rootId: "root-gusta-li",
-        blood: { 
-            heb: "גוסטה דוד", eng: "Gusta Dawid", gender: "female", id: "box-gusta", tag: "אחות של סבינה לנדוור (דוד)",
-            story: "אחותה של סבינה לנדוור לבית דוד. שרדה את השואה והגישה דפי עד עבור בעלה שמואל חיים ובתה צביה."
-        },
-        spouse: {
-            heb: "שמואל חיים דוד", eng: "Shmuel Chaim Dawid", gender: "male", perished: true,
-            files: [{ name: "דף עד ביד ושם (657081)", path: "https://collections.yadvashem.org/en/names/657081" }]
-        },
-        children: [
-            {
-                type: "couple", color: "c-dawid", defaultExpanded: true, spouseSide: "left",
-                blood: {
-                    heb: "פנינה כרמלי (דוד)", eng: "Pnina Carmeli (Dawid)", gender: "female", death: "2019", tag: "בת דודה של בוזיו (שרדה)",
-                    files: [
-                        { name: "רשומת ניצולה ביד ושם (10034959)", path: "https://collections.yadvashem.org/en/names/10034959" },
-                        { name: "מודעת אבל - פנינה כרמלי (2019)", path: "https://www.google.com/search?q=פנינה+כרמלי+דוד+מודעת+אבל" }
-                    ]
-                },
-                spouse: {
-                    heb: "הלל כרמלי", eng: "Hillel Carmeli", gender: "male", death: "2020",
-                    files: [{ name: "מודעת אבל - הלל כרמלי (2020)", path: "https://www.google.com/search?q=הלל+כרמלי+מודעת+אבל" }]
-                },
-                children: [
-                    { type: "single", color: "c-dawid", blood: { heb: "שמואל כרמלי", eng: "Shmuel Carmeli", gender: "male" } },
-                    { type: "single", color: "c-dawid", blood: { heb: "סמדר כרמלי", eng: "Smadar Carmeli", gender: "female" } },
-                    { type: "single", color: "c-dawid", blood: { heb: "זהבה כרמלי", eng: "Zahava Carmeli", gender: "female" } },
-                    { type: "single", color: "c-dawid", blood: { heb: "אבי כרמלי", eng: "Avi Carmeli", gender: "male" } }
-                ]
-            },
-            {
-                type: "single", color: "c-dawid",
-                blood: {
-                    heb: "צביה דוד", eng: "Tzvia Dawid", gender: "female", perished: true, tag: "נספתה בשואה (זיהוי בסבירות גבוהה)",
-                    files: [{ name: "דף עד ביד ושם (8796953)", path: "https://collections.yadvashem.org/en/names/8796953" }]
-                }
             }
         ]
     }
