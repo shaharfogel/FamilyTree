@@ -1,4 +1,4 @@
-// Version: v3.2 Smart
+// Version: v4.2 Entities
 let treeDataFogel = {
     type: "couple", color: "c-root", defaultExpanded: true,
     blood: { heb: "יוכבד", eng: "Yochevet", gender: "female", tag: "שורש המשפחה", story: "אם המשפחה בראש העץ יחד עם דב. חמשת ילדיהם הם: פרויים גולדין, טוביה פייגל, הדוד ממקסיקו, פרדל פייגל (גלוברמן), ואברהם יעקב פייגל." },
@@ -526,14 +526,12 @@ let treeDataFogel = {
                         {
                             type: "couple", color: "c-pink", defaultExpanded: true, spouseSide: "left",
                             spouse: { 
-                                heb: `חיה פוגל
-                                <div class="person female-node" style="position: absolute; top: 50%; left: -115px; transform: translateY(-50%); min-width: 75px; max-width: 90px; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1.5px solid #475569; background: #fff; cursor: default; z-index: 10; direction: rtl;">
-                                    <div class="heb" style="font-size: 11px; margin:0; color:#111;">אביבה סטולר</div>
-                                    <div class="tag" style="font-size: 8px; margin-top:2px; background: #e2e8f0; border:1px solid #94a3b8; color: #333;">אחות</div>
-                                </div>
-                                <div style="position: absolute; top: 50%; left: -25px; width: 25px; height: 1.5px; background: #475569; z-index: 9;"></div>`,
+                                heb: "חיה פוגל",
                                 eng: "Chaya Fogel", 
-                                gender: "female" 
+                                gender: "female",
+                                floatingSiblings: [
+                                    { heb: "אביבה סטולר", gender: "female", tag: "אחות" }
+                                ]
                             },
                             blood: {
                                 heb: "יוסף (יוסקה) פוגל", eng: "Josef (Yoskeh) Fogel", gender: "male", birth: "1926",
@@ -557,19 +555,13 @@ let treeDataFogel = {
                                 {
                                     type: "couple", color: "c-pink", defaultExpanded: true, spouseSide: "left",
                                     spouse: { 
-                                        heb: `רוזי פוגל
-                                        <div style="position: absolute; top: -65px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 0; z-index: 10; cursor: default; direction: rtl;">
-                                            <div class="person male-node" style="min-width: 75px; max-width: 90px; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1.5px solid #475569; background: #fff;">
-                                                <div class="heb" style="font-size: 11px; margin:0; color:#111;">משה בכר</div>
-                                            </div>
-                                            <div style="width: 15px; height: 1.5px; background: #475569;"></div>
-                                            <div class="person female-node" style="min-width: 75px; max-width: 90px; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1.5px solid #475569; background: #fff;">
-                                                <div class="heb" style="font-size: 11px; margin:0; color:#111;">ויקי בכר</div>
-                                            </div>
-                                        </div>
-                                        <div style="position: absolute; top: -35px; left: 50%; width: 1.5px; height: 35px; background: #475569; transform: translateX(-50%); z-index: 9;"></div>`,
+                                        heb: "רוזי פוגל",
                                         eng: "Rozy Fogel", 
-                                        gender: "female" 
+                                        gender: "female",
+                                        floatingParents: [
+                                            { heb: "משה בכר", gender: "male" },
+                                            { heb: "ויקי בכר", gender: "female" }
+                                        ]
                                     },
                                     blood: {
                                         heb: "ליאור פוגל", eng: "Lior Fogel", gender: "male",
