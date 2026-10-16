@@ -1,3 +1,8 @@
+/* =========================================
+   LOGIC SECTION (App functionality)
+   WITH SMART MERGE ALGORITHM
+========================================= */
+
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZDjVPjnW_-kTHSSD0ccBX4ez-y9QrQ7M7Vmmg4WDZnPhC5YQr4VxbGyqXrBh4iaHbwg/exec';
 const driveFolderUrl = "https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM?usp=drive_link";
 
@@ -15,18 +20,109 @@ function getFallbackUrl(url) {
     return url;
 }
 
+// פונקציה לשליפת שם נקי (ללא קוד HTML שנמצא בתוך השם) לטובת זיהוי חכם
+function getCleanName(htmlString) {
+    if (!htmlString) return '';
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlString;
+    if (tempDiv.childNodes.length > 0 && tempDiv.childNodes[0].nodeType === 3) {
+        return tempDiv.childNodes[0].nodeValue.trim();
+    }
+    return tempDiv.innerText.trim();
+}
+
 let currentEditingPerson = null;
 let svgConnections = [];
 let scale = 0.55, pointX = 0, pointY = 0;
+
+// בניית מילון חכם לחיפוש אנשים מהענן לפי מזהים או שמות
+function buildCloudMap(cloudData, mapById, mapByName) {
+    if (!cloudData) return;
+    const add = p => {
+        if (!p) return;
+        if (p.id && !p.id.startsWith('node-')) mapById.set(p.id, p);
+        
+        if (p.heb) {
+            if (p.originalHeb) mapByName.set(p.originalHeb.trim(), p);
+            mapByName.set(getCleanName(p.heb), p);
+        }
+    };
+    if (cloudData.blood) add(cloudData.blood);
+    if (cloudData.spouse) add(cloudData.spouse);
+    if (cloudData.nodes) cloudData.nodes.forEach(add);
+    if (cloudData.children) cloudData.children.forEach(c => buildCloudMap(c, mapById, mapByName));
+}
+
+// שפיכת הנתונים מהענן לתוך המבנה המקומי של data.js בלי לשבור את המבנה החדש
+function applyCloudDataToLocal(localData, mapById, mapByName) {
+    if (!localData) return;
+    if (Array.isArray(localData)) {
+        localData.forEach(item => applyCloudDataToLocal(item.tree || item, mapById, mapByName));
+        return;
+    }
+
+    const updatePerson = p => {
+        if (!p) return;
+        let cloudMatch = null;
+        
+        if (p.id && !p.id.startsWith('node-')) {
+            cloudMatch = mapById.get(p.id);
+        }
+        
+        if (!cloudMatch && p.heb) {
+            cloudMatch = mapByName.get(getCleanName(p.heb));
+        }
+        
+        if (cloudMatch) {
+            const fields = ['heb', 'eng', 'birth', 'death', 'gender', 'customImage', 'perished', 'images', 'files', 'story', 'tag', 'originalHeb'];
+            fields.forEach(f => {
+                if (cloudMatch[f] !== undefined && cloudMatch[f] !== null && cloudMatch[f] !== "") {
+                    // התעלמות מקישורי תמונות שבורים
+                    if (f === 'customImage' && cloudMatch[f].includes('undefined')) return;
+                    
+                    // שמירה על מבנה HTML במידה ויש קוביות מרחפות בקובץ המקומי שעדיין לא התעדכנו לענן
+                    if (f === 'heb') {
+                        if (p.heb && p.heb.includes('<div') && (!cloudMatch.heb || !cloudMatch.heb.includes('<div'))) {
+                            let htmlPart = p.heb.substring(p.heb.indexOf('<div'));
+                            p.heb = getCleanName(cloudMatch.heb) + "\n" + htmlPart;
+                            return;
+                        }
+                    }
+                    p[f] = cloudMatch[f];
+                }
+            });
+        }
+    };
+
+    if(localData.blood) updatePerson(localData.blood);
+    if(localData.spouse) updatePerson(localData.spouse);
+    if(localData.nodes) localData.nodes.forEach(updatePerson);
+    if(localData.children) localData.children.forEach(c => applyCloudDataToLocal(c, mapById, mapByName));
+}
 
 fetch(WEB_APP_URL)
     .then(r => r.json())
     .then(data => {
         const dataString = JSON.stringify(data);
-        const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור') || dataString.includes('04-מסמכי-ארכיון');
+        const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור');
+        
         if(data && data.fogel && data.landwehr && !hasOldLocalLinks) {
-            mergeCloudData(treeDataFogel, data.fogel);
-            mergeCloudDataList(treeDataLandwehr, data.landwehr);
+            const mapById = new Map();
+            const mapByName = new Map();
+            
+            const processCloud = (c) => {
+                if (Array.isArray(c)) c.forEach(item => buildCloudMap(item.tree || item, mapById, mapByName));
+                else buildCloudMap(c, mapById, mapByName);
+            };
+            
+            processCloud(data.fogel);
+            processCloud(data.landwehr);
+            if (data.dawid) processCloud(data.dawid);
+
+            applyCloudDataToLocal(treeDataFogel, mapById, mapByName);
+            applyCloudDataToLocal(treeDataLandwehr, mapById, mapByName);
+            if (typeof treeDataDawid !== 'undefined') applyCloudDataToLocal(treeDataDawid, mapById, mapByName);
+            
             document.getElementById('loadingStatus').textContent = 'סונכרן בהצלחה ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
@@ -37,40 +133,11 @@ fetch(WEB_APP_URL)
         document.getElementById('initial-loader').style.display = 'none';
         renderTree();
     }).catch(e => {
+        console.error("Fetch Error:", e);
         document.getElementById('loadingStatus').textContent = 'עובד ללא סנכרון ⚠️';
         document.getElementById('initial-loader').style.display = 'none';
         renderTree();
     });
-
-function mergeCloudData(local, cloud) {
-    if (!local || !cloud) return;
-    const fields = ['heb', 'eng', 'birth', 'death', 'gender', 'customImage', 'perished', 'images', 'files', 'story', 'tag'];
-    const copyFields = (l, c) => {
-        if (!l || !c) return;
-        fields.forEach(f => {
-            if (c[f] !== undefined) {
-                if (f === 'customImage' && c[f] && (c[f].includes('undefined') || !c[f].includes('http'))) {
-                    l[f] = null;
-                } else {
-                    l[f] = c[f];
-                }
-            }
-        });
-    };
-    copyFields(local.blood, cloud.blood);
-    if(local.spouse && cloud.spouse) copyFields(local.spouse, cloud.spouse);
-    if (local.nodes && cloud.nodes) local.nodes.forEach((n, i) => copyFields(n, cloud.nodes[i]));
-    if (local.children && cloud.children) local.children.forEach((child, i) => { if (cloud.children[i]) mergeCloudData(child, cloud.children[i]); });
-}
-
-function mergeCloudDataList(localList, cloudList) {
-    localList.forEach((local, i) => { 
-        if (cloudList[i]) {
-            if(local.tree && cloudList[i].tree) { mergeCloudData(local.tree, cloudList[i].tree); }
-            else { mergeCloudData(local, cloudList[i]); }
-        }
-    });
-}
 
 function renderTree() {
     svgConnections = [];
@@ -277,7 +344,6 @@ function drawSVGConnections() {
         drawOrthogonalTreeLines(conn.parentElId, conn.childElIds, 32, '#222', '2', null);
     });
 
-    // Special cousin/family lines
     drawOrthogonalTreeLines('bridge-fredel-josef', ['box-mina', 'box-inda-lea'], 58, '#111111', '2', null);
     drawOrthogonalTreeLines('bridge-landwehr-parents', ['box-sima', 'box-nava'], 40, '#b45309', '2.8', null);
 }
@@ -291,11 +357,7 @@ if (typeof ResizeObserver !== 'undefined' && canvasEl) {
 function openModal(person) {
     currentEditingPerson = person;
     
-    // Handle inline HTML in name (like the floating parents)
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = person.heb;
-    const cleanName = tempDiv.childNodes[0].nodeValue ? tempDiv.childNodes[0].nodeValue.trim() : tempDiv.innerText.trim();
-    
+    const cleanName = getCleanName(person.heb);
     document.getElementById('modal-title').textContent = cleanName + (person.eng ? ` (${person.eng})` : '');
     document.getElementById('modal-story').innerHTML = person.story || 'אין הערות מחקר ספציפיות נוספות עבור כרטיס זה.';
     
@@ -372,10 +434,7 @@ function enterEditMode() {
     document.getElementById('modal-body').style.display = 'none';
     document.getElementById('modal-edit').style.display = 'block';
     
-    // Strip inline html for editing
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = currentEditingPerson.heb;
-    const cleanName = tempDiv.childNodes[0].nodeValue ? tempDiv.childNodes[0].nodeValue.trim() : tempDiv.innerText.trim();
+    const cleanName = getCleanName(currentEditingPerson.heb);
 
     document.getElementById('editNameHeb').value = cleanName || '';
     document.getElementById('editNameEng').value = currentEditingPerson.eng || '';
@@ -425,8 +484,13 @@ const compressImage = async (file) => {
 };
 
 async function saveEdit() {
-    // preserve inline html tags if any
     let newHeb = document.getElementById('editNameHeb').value;
+    
+    // שמירת השם המקורי לפני עריכה, לטובת זיהוי עתידי (מיזוג חכם)
+    if (!currentEditingPerson.originalHeb) {
+        currentEditingPerson.originalHeb = getCleanName(currentEditingPerson.heb);
+    }
+
     if(currentEditingPerson.heb && currentEditingPerson.heb.includes('<div')) {
         let htmlPart = currentEditingPerson.heb.substring(currentEditingPerson.heb.indexOf('<div'));
         currentEditingPerson.heb = newHeb + "\n" + htmlPart;
