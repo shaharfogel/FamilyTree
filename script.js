@@ -1,10 +1,9 @@
-// Version: v4.5 Final Fix
+// Version: v4.6 Perfected
 /* =========================================
    LOGIC SECTION (App functionality)
    CLOUD DATABASE OVERRIDE & CONTEXT MENU
 ========================================= */
 
-// הלינק המעודכן לשרת שלך!
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
 
 function getDirectImageUrl(url) {
@@ -86,8 +85,17 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
     if(localData.children) localData.children.forEach(c => applyCloudDataToLocal(c, mapById, mapByName));
 }
 
+// קריאה מהענן (עם הדפסת שגיאות מסודרת למקרה של בעיות הרשאה)
 fetch(WEB_APP_URL)
-    .then(r => r.json())
+    .then(async r => {
+        const text = await r.text();
+        try {
+            return JSON.parse(text);
+        } catch(e) {
+            console.error("שגיאה! השרת החזיר טקסט לא תקין במקום JSON (כנראה בעיית הרשאות):", text);
+            throw new Error("Invalid Server Response");
+        }
+    })
     .then(data => {
         const dataString = JSON.stringify(data);
         const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור');
@@ -111,7 +119,7 @@ fetch(WEB_APP_URL)
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
-            document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
+            document.getElementById('loadingStatus').textContent = 'מסד נתונים חדש נוצר ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         }
         document.getElementById('initial-loader').style.display = 'none';
@@ -140,21 +148,19 @@ function renderTree() {
     setTimeout(() => { fitToScreen(); }, 100);
 }
 
-function createPersonBox(personData, roleClass, colorClass, isFloating = false) {
+function createPersonBox(personData, roleClass, colorClass) {
     const div = document.createElement('div');
     const extraClass = personData.cousinWife ? 'cousin-wife' : '';
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
     div.className = `person ${roleClass} ${extraClass} ${colorClass} ${genderClass}`;
     
-    // קריטי! מוודאים שיש ID לכל אדם.
     if (!personData.id) personData.id = 'node-' + Math.random().toString(36).substr(2, 9);
     div.id = personData.id;
     
     let customImgHtml = '';
     let finalImgUrl = personData.customImage || (personData.images && personData.images.length > 0 ? personData.images[0] : (personData.image || null));
     
-    // קוד אגרסיבי וחסין לכיווץ התמונות בדיוק כמו שביקשת
-    const safeStyle = "width:55px !important; height:55px !important; min-width:55px !important; min-height:55px !important; max-width:55px !important; max-height:55px !important; border-radius:50% !important; object-fit:cover !important; margin:0 auto 6px auto !important; border:2px solid #cbd5e1 !important; box-shadow:0 2px 4px rgba(0,0,0,0.1) !important; display:block !important;";
+    const safeStyle = "width:55px !important; height:55px !important; min-width:55px !important; min-height:55px !important; max-width:55px !important; max-height:55px !important; border-radius:50% !important; object-fit:cover !important; margin:0 auto 6px auto !important; border:2px solid #94a3b8 !important; box-shadow:0 2px 4px rgba(0,0,0,0.1) !important; display:block !important; pointer-events:auto !important;";
 
     if (finalImgUrl) {
         if (finalImgUrl.includes('http')) {
@@ -176,40 +182,6 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
     
-    if (!isFloating) {
-        if (personData.floatingParents && personData.floatingParents.length === 2) {
-            const fpContainer = document.createElement('div');
-            fpContainer.style.position = 'absolute'; fpContainer.style.top = '-105px'; fpContainer.style.left = '50%'; fpContainer.style.transform = 'translateX(-50%)'; fpContainer.style.display = 'flex'; fpContainer.style.alignItems = 'center'; fpContainer.style.gap = '0'; fpContainer.style.zIndex = '10'; fpContainer.style.direction = 'rtl';
-            
-            const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass, true);
-            p1.style.minWidth = '80px'; p1.style.maxWidth = '90px'; p1.style.padding = '5px';
-            
-            const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass, true);
-            p2.style.minWidth = '80px'; p2.style.maxWidth = '90px'; p2.style.padding = '5px';
-            
-            const line = document.createElement('div');
-            line.style.width = '20px'; line.style.height = '2px'; line.style.background = '#475569';
-            
-            fpContainer.appendChild(p1); fpContainer.appendChild(line); fpContainer.appendChild(p2);
-            
-            const vertLine = document.createElement('div');
-            vertLine.style.position = 'absolute'; vertLine.style.top = '-40px'; vertLine.style.left = '50%'; vertLine.style.width = '2px'; vertLine.style.height = '45px'; vertLine.style.background = '#475569'; vertLine.style.transform = 'translateX(-50%)'; vertLine.style.zIndex = '9';
-            
-            div.appendChild(fpContainer); div.appendChild(vertLine);
-        }
-
-        if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
-            const sib = personData.floatingSiblings[0];
-            const sibBox = createPersonBox(sib, 'blood', colorClass, true);
-            sibBox.style.position = 'absolute'; sibBox.style.top = '50%'; sibBox.style.left = '-120px'; sibBox.style.transform = 'translateY(-50%)'; sibBox.style.minWidth = '80px'; sibBox.style.maxWidth = '90px'; sibBox.style.padding = '5px'; sibBox.style.zIndex = '10';
-            
-            const horizLine = document.createElement('div');
-            horizLine.style.position = 'absolute'; horizLine.style.top = '50%'; horizLine.style.left = '-35px'; horizLine.style.width = '40px'; horizLine.style.height = '2px'; horizLine.style.background = '#475569'; horizLine.style.zIndex = '9';
-
-            div.appendChild(sibBox); div.appendChild(horizLine);
-        }
-    }
-    
     div.addEventListener('click', (e) => { e.stopPropagation(); openModal(personData); });
     div.addEventListener('contextmenu', (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -217,6 +189,71 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
     });
     
     return div;
+}
+
+function applyFloating(personBox, personData, colorClass) {
+    if ((!personData.floatingParents || personData.floatingParents.length === 0) &&
+        (!personData.floatingSiblings || personData.floatingSiblings.length === 0)) {
+        return personBox;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'flex';
+    wrapper.style.justifyContent = 'center';
+
+    wrapper.appendChild(personBox);
+
+    if (personData.floatingParents && personData.floatingParents.length === 2) {
+        const fpContainer = document.createElement('div');
+        fpContainer.style.position = 'absolute';
+        fpContainer.style.top = '-105px';
+        fpContainer.style.left = '50%';
+        fpContainer.style.transform = 'translateX(-50%)';
+        fpContainer.style.display = 'flex';
+        fpContainer.style.alignItems = 'center';
+        fpContainer.style.zIndex = '10';
+
+        const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass);
+        const bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
+        const bridge = createBridge(bridgeId);
+        const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass);
+
+        fpContainer.appendChild(p1);
+        fpContainer.appendChild(bridge);
+        fpContainer.appendChild(p2);
+        wrapper.appendChild(fpContainer);
+
+        svgConnections.push({
+            parentElId: bridgeId,
+            childElIds: [personBox.id],
+            liElement: null,
+            offset: 22
+        });
+    }
+
+    if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
+        const sibBox = createPersonBox(personData.floatingSiblings[0], 'blood', colorClass);
+        
+        const sibContainer = document.createElement('div');
+        sibContainer.style.position = 'absolute';
+        sibContainer.style.top = '50%';
+        sibContainer.style.left = '-160px'; // מציב את האחות משמאל
+        sibContainer.style.transform = 'translateY(-50%)';
+        sibContainer.style.zIndex = '10';
+
+        sibContainer.appendChild(sibBox);
+        wrapper.appendChild(sibContainer);
+
+        svgConnections.push({
+            customLine: true,
+            type: 'horizontal',
+            sourceId: sibBox.id,
+            targetId: personBox.id
+        });
+    }
+
+    return wrapper;
 }
 
 function createBridge(bridgeId) {
@@ -237,13 +274,20 @@ function buildTreeNode(item) {
 
     if (item.type === 'single') {
         if (!item.blood.id) item.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
-        unit.appendChild(createPersonBox(item.blood, 'blood', item.color));
+        let bloodBox = createPersonBox(item.blood, 'blood', item.color);
+        bloodBox = applyFloating(bloodBox, item.blood, item.color);
+        unit.appendChild(bloodBox);
     } else if (item.type === 'couple') {
         if (!item.blood.id) item.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
         if (!item.spouse.id) item.spouse.id = 'node-' + Math.random().toString(36).substr(2, 9);
         if(!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
-        const bloodBox = createPersonBox(item.blood, 'blood', item.color);
-        const spouseBox = createPersonBox(item.spouse, 'spouse', item.color);
+        
+        let bloodBox = createPersonBox(item.blood, 'blood', item.color);
+        bloodBox = applyFloating(bloodBox, item.blood, item.color);
+        
+        let spouseBox = createPersonBox(item.spouse, 'spouse', item.color);
+        spouseBox = applyFloating(spouseBox, item.spouse, item.color);
+        
         const bridge = createBridge(item.bridgeId);
 
         if (item.spouseSide === 'left') { unit.appendChild(spouseBox); unit.appendChild(bridge); unit.appendChild(bloodBox); } 
@@ -251,7 +295,9 @@ function buildTreeNode(item) {
     } else if (item.type === 'multi') {
         item.nodes.forEach((n, idx) => {
             if (!n.id) n.id = 'node-' + Math.random().toString(36).substr(2, 9);
-            unit.appendChild(createPersonBox(n, n.role, item.color));
+            let nBox = createPersonBox(n, n.role, item.color);
+            nBox = applyFloating(nBox, n, item.color);
+            unit.appendChild(nBox);
             if (idx < item.nodes.length - 1) unit.appendChild(createBridge());
         });
     }
@@ -458,8 +504,25 @@ function drawSVGConnections() {
     }
 
     svgConnections.forEach(conn => {
+        if (conn.customLine && conn.type === 'horizontal') {
+            const sEl = document.getElementById(conn.sourceId);
+            const tEl = document.getElementById(conn.targetId);
+            if(sEl && tEl) {
+                const sC = getNativeCoords(sEl);
+                const tC = getNativeCoords(tEl);
+                const y = sC.y + (sC.height / 2);
+                const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                p.setAttribute('d', `M ${sC.x} ${y} L ${tC.x} ${y}`);
+                p.setAttribute('stroke', '#222');
+                p.setAttribute('stroke-width', '2');
+                p.setAttribute('fill', 'none');
+                svg.appendChild(p);
+            }
+            return;
+        }
+
         if (conn.liElement && conn.liElement.classList.contains('collapsed')) return;
-        drawOrthogonalTreeLines(conn.parentElId, conn.childElIds, 32, '#222', '2', null);
+        drawOrthogonalTreeLines(conn.parentElId, conn.childElIds, conn.offset || 32, '#222', '2', null);
     });
 
     drawOrthogonalTreeLines('bridge-fredel-josef', ['box-mina', 'box-inda-lea'], 58, '#111111', '2', null);
