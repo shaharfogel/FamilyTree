@@ -1,4 +1,4 @@
-<!-- Version: v5.2 Perfected Sync -->
+<!-- Version: v5.3 Perfected -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -116,7 +116,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.2 Perfected Sync</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.3 Perfected</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
@@ -176,6 +176,17 @@
             <div class="modal-section" id="image-section" style="display:none;">
                 <h3>🖼️ תמונות ודיוקנאות מתוך הארכיון</h3>
                 <div id="modal-images" class="modal-img-grid"></div>
+            </div>
+
+            <!-- החזרתי את החלק החסר שגרם לקריסה! -->
+            <div class="modal-section" id="files-section">
+                <h3>📁 מסמכים, דפי עד וקישורים ישירים</h3>
+                <div id="modal-files"></div>
+            </div>
+            
+            <div class="modal-section" id="global-section">
+                <h3>📚 קבצי מחקר ואינדקס כלליים</h3>
+                <div id="global-files"></div>
             </div>
         </div>
 
