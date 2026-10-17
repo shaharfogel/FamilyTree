@@ -1,7 +1,7 @@
-// Version: v5.2 Perfected Sync
+// Version: v5.3 Perfected
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
+   CLOUD DATABASE OVERRIDE, CONTEXT MENU, SMART IMAGE SYNC
 ========================================= */
 
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
@@ -30,10 +30,10 @@ function getCleanName(htmlString) {
     return tempDiv.innerText.trim();
 }
 
-// פונקציית נירמול חכמה - מוחקת סוגריים ורווחים כדי שתמונות יתאימו במדויק תמיד
-function normalizeName(str) {
+// הפונקציה החכמה - מוחקת הכל פרט לאותיות בעברית ובאנגלית!
+function getLettersOnly(str) {
     if(!str) return '';
-    return str.replace(/[^\u0590-\u05FFa-zA-Z0-9]/g, '');
+    return str.replace(/[^a-zA-Z\u0590-\u05FF]/g, '');
 }
 
 let currentEditingPerson = null;
@@ -47,8 +47,8 @@ function buildCloudMap(cloudData, mapById, mapByName) {
         if (!p) return;
         if (p.id && !p.id.startsWith('node-')) mapById.set(p.id, p);
         if (p.heb) {
-            if (p.originalHeb) mapByName.set(normalizeName(p.originalHeb), p);
-            mapByName.set(normalizeName(p.heb), p);
+            if (p.originalHeb) mapByName.set(getLettersOnly(p.originalHeb), p);
+            mapByName.set(getLettersOnly(p.heb), p);
         }
         if (p.floatingParents) p.floatingParents.forEach(add);
         if (p.floatingSiblings) p.floatingSiblings.forEach(add);
@@ -70,7 +70,7 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
         if (!p) return;
         let cloudMatch = null;
         if (p.id && !p.id.startsWith('node-')) cloudMatch = mapById.get(p.id);
-        if (!cloudMatch && p.heb) cloudMatch = mapByName.get(normalizeName(p.heb));
+        if (!cloudMatch && p.heb) cloudMatch = mapByName.get(getLettersOnly(p.heb));
         
         if (cloudMatch) {
             const fields = ['heb', 'eng', 'birth', 'death', 'gender', 'customImage', 'perished', 'images', 'files', 'stories', 'tag', 'originalHeb'];
@@ -95,7 +95,7 @@ fetch(WEB_APP_URL)
     .then(async r => {
         const text = await r.text();
         try { return JSON.parse(text); } 
-        catch(e) { throw new Error("Invalid Server Response (Check 'Anyone' permission)"); }
+        catch(e) { throw new Error("Invalid Server Response"); }
     })
     .then(data => {
         let treeConfig = data.tree || data; 
@@ -103,10 +103,11 @@ fetch(WEB_APP_URL)
         
         if(treeConfig.fogel && treeConfig.landwehr) {
             
-            // יצירת מילון תמונות דינמי חכם - אדיש לרווחים וסוגריים
+            // המילון החכם: הופך כל שם קובץ לרצף אותיות בלבד לזיהוי מדויק
             let dynamicImagesNorm = {};
             for(let key in dynamicImages) {
-                dynamicImagesNorm[normalizeName(key)] = dynamicImages[key];
+                let cleanKey = getLettersOnly(key.replace(/\.[a-zA-Z0-9]+$/, ""));
+                if(cleanKey) dynamicImagesNorm[cleanKey] = dynamicImages[key];
             }
 
             const mapById = new Map();
@@ -123,7 +124,7 @@ fetch(WEB_APP_URL)
 
             function applyDynamicImages(node) {
                 if(!node) return;
-                let cName = normalizeName(getCleanName(node.heb));
+                let cName = getLettersOnly(getCleanName(node.heb));
                 if (cName && dynamicImagesNorm[cName]) {
                     node.customImage = dynamicImagesNorm[cName].url;
                     node.images = [];
@@ -188,7 +189,6 @@ function createPersonBox(personData, roleClass, colorClass) {
             const directUrl = getDirectImageUrl(finalImgUrl);
             const fallbackUrl = getFallbackUrl(finalImgUrl);
             const ts = new Date().getTime();
-            // crossorigin חובה בשביל פוסטר!
             customImgHtml = `<img src="${directUrl}&t=${ts}" crossorigin="anonymous" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
         } else {
             customImgHtml = `<img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
@@ -204,7 +204,6 @@ function createPersonBox(personData, roleClass, colorClass) {
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
     
-    // קליקים שעובדים מעולה וחסינים לפאנינג
     div.onclick = function(e) {
         e.preventDefault(); 
         e.stopPropagation(); 
@@ -636,14 +635,30 @@ function openModal(person) {
         imgSection.style.display = 'none';
     }
     
+    // כאן הייתה השגיאה המפורסמת - החזרנו את האלמנטים ל-HTML כדי שזה יעבוד
     const filesContainer = document.getElementById('modal-files');
     filesContainer.innerHTML = '';
     if (person.files && person.files.length > 0) {
         person.files.forEach(f => {
             const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `🔗 ${f.name}`; filesContainer.appendChild(a);
         });
+        document.getElementById('files-section').style.display = 'block';
     } else {
-        filesContainer.innerHTML = '<span style="color: #666; font-size: 13px;">אין קבצים אישיים.</span>';
+        document.getElementById('files-section').style.display = 'none';
+    }
+    
+    const globalContainer = document.getElementById('global-files');
+    if(globalContainer.innerHTML === '') {
+        const globalArchiveFiles = [
+            { name: "תיקיית Google Drive המלאה של הארכיון", path: "https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM" },
+            { name: "00-קראו-אותי.txt (מדריך הארכיון המלא)", path: "https://drive.google.com/file/d/1r5ctjXz-s5ogfpdvDGz4t8GOZqNEnf-w/view?usp=drivesdk" },
+            { name: "01-עצים / Family Tree-print-poster.pdf", path: "https://drive.google.com/file/d/1KgSHz2mMJ_5KkYP4OE882ZzKQW-Y0Tvp/view?usp=drivesdk" },
+            { name: "02-פוגל / פוגל-דף-הנצחה.pdf", path: "https://drive.google.com/file/d/1LXAkkSLRvkq6YUasl10JvXQLVUBJOqZU/view?usp=drivesdk" },
+            { name: "03-לנדוור / דף הקראת שמות מעודכן עם תמונות.pdf", path: "https://drive.google.com/file/d/1XSbmG457Ik6_CFm36Pp46rRVbjuYA6LQ/view?usp=drivesdk" }
+        ];
+        globalArchiveFiles.forEach(f => {
+            const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `📂 ${f.name}`; globalContainer.appendChild(a);
+        });
     }
     
     document.getElementById('modal-body').style.display = 'flex';
@@ -851,7 +866,15 @@ function exportTreeAsImage(mode) {
         svg.style.width = w + 'px'; svg.style.height = h + 'px';
         if (typeof drawSVGConnections === 'function') drawSVGConnections();
         loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
-        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h }).then(function(renderedCanvas) {
+        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h, onclone: function(clonedDoc) { 
+            var imgs = clonedDoc.querySelectorAll('.person img'); 
+            for(var i = 0; i < imgs.length; i++) { 
+                var img = imgs[i]; 
+                if (img.src && img.src.indexOf('drive.google.com') !== -1) { 
+                    img.src = 'https://wsrv.nl/?url=' + encodeURIComponent(img.src) + '&w=120&h=120&fit=cover&mask=circle'; 
+                } 
+            } 
+        } }).then(function(renderedCanvas) {
             restoreView(oldScale, oldX, oldY, svg); loaderText.textContent = "פותח חלון שמירה... 💾";
             renderedCanvas.toBlob(function(blob) { loader.style.display = 'none'; if (!blob) { alert("שגיאה ביצירת הקובץ."); return; } var filename = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png'; var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function() { URL.revokeObjectURL(url); }, 1000); }, 'image/png');
         }).catch(function(err) { console.error(err); restoreView(oldScale, oldX, oldY, svg); loader.style.display = 'none'; alert("שגיאה ביצירת התמונה: " + err.message); });
