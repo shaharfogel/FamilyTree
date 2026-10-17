@@ -1,4 +1,4 @@
-// Version: v9.0 ID Engine
+// Version: v9.1 Auto-Sync
 /* =========================================
    LOGIC SECTION (App functionality)
    UNIQUE ID ENGINE, SAFE-CHECKS, SYNC
@@ -79,7 +79,6 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
                     p[f] = cloudMatch[f];
                 }
             });
-            // אם לענן יש ID, תמשוך אותו כדי למנוע יצירת ID כפול
             if(cloudMatch.id) p.id = cloudMatch.id;
         }
         if (p.floatingParents) p.floatingParents.forEach(updatePerson);
@@ -99,6 +98,17 @@ fetch(WEB_APP_URL)
         catch(e) { throw new Error("Invalid Server Response"); }
     })
     .then(data => {
+        
+        // התראת עזר שמזהה שהקוד לא הוחלף בשרת
+        if (!data.images) {
+            alert("⚠️ שגיאת סנכרון חמורה!\nהשרת של גוגל מריץ גרסה ישנה של הקוד, ולכן התמונות החדשות לא נשאבות.\nאנא חזור ל-Apps Script, מחק הכל, הדבק את הקוד החדש, ולחץ על Deploy -> New Deployment.");
+            document.getElementById('loadingStatus').textContent = 'שגיאת שרת: לא מקוון ❌';
+            document.getElementById('loadingStatus').style.color = 'red';
+        } else {
+            document.getElementById('loadingStatus').textContent = 'מסד ו-ID תמונות סונכרנו ✅';
+            document.getElementById('loadingStatus').style.color = 'green';
+        }
+        
         let treeConfig = data.tree || data; 
         let dynamicImages = data.images || {};
         
@@ -118,12 +128,10 @@ fetch(WEB_APP_URL)
             function applyDynamicImages(node) {
                 if(!node) return;
                 
-                // שיטה 1: בדיקת ID אבסולוטי (לפי המנגנון החדש)
                 if (node.id && dynamicImages[node.id]) {
                     node.customImage = dynamicImages[node.id].url;
                     node.images = [];
                 } 
-                // שיטה 2: Fallback לשמות התמונות הישנות 
                 else {
                     let cName = getLettersOnly(getCleanName(node.heb));
                     if (cName && dynamicImages[cName]) {
@@ -141,13 +149,8 @@ fetch(WEB_APP_URL)
             }
             applyDynamicImages(treeDataFogel);
             treeDataLandwehr.forEach(applyDynamicImages);
-            
-            document.getElementById('loadingStatus').textContent = 'מסד ו-ID תמונות סונכרנו ✅';
-            document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
-            document.getElementById('loadingStatus').textContent = 'מסד נתונים חדש נוצר ✅';
-            document.getElementById('loadingStatus').style.color = 'green';
         }
         document.getElementById('initial-loader').style.display = 'none';
         renderTree();
@@ -201,7 +204,7 @@ function createPersonBox(personData, roleClass, colorClass) {
     let datesHtml = '';
     let b = personData.birth ? personData.birth.trim() : '';
     let d = personData.death ? personData.death.trim() : '';
-    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} -${d}` : b}</div>`;
+    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} - ${d}` : b}</div>`;
     
     let starHtml = personData.perished ? `<div class="holocaust-icon" title="נרצח/ה בשואה"></div>` : '';
     
@@ -253,7 +256,12 @@ function applyFloating(personBox, personData, colorClass) {
         fpContainer.appendChild(p2);
         wrapper.appendChild(fpContainer);
 
-        svgConnections.push({ customLine: true, type: 'verticalToParent', sourceId: bridgeId, targetId: personBox.id });
+        svgConnections.push({
+            customLine: true,
+            type: 'verticalToParent',
+            sourceId: bridgeId,
+            targetId: personBox.id
+        });
     }
 
     if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
@@ -269,7 +277,12 @@ function applyFloating(personBox, personData, colorClass) {
         sibContainer.appendChild(sibBox);
         wrapper.appendChild(sibContainer);
 
-        svgConnections.push({ customLine: true, type: 'horizontal', sourceId: sibBox.id, targetId: personBox.id });
+        svgConnections.push({
+            customLine: true,
+            type: 'horizontal',
+            sourceId: sibBox.id,
+            targetId: personBox.id
+        });
     }
 
     return wrapper;
@@ -570,7 +583,6 @@ if (typeof ResizeObserver !== 'undefined' && canvasEl) {
     resizeObserver.observe(canvasEl);
 }
 
-// אלגוריתם ה-Safe Checks: כל פעולה נבדקת אם האלמנט קיים לפני שהיא מבוצעת
 function openModal(person) {
     currentEditingPerson = person;
     
@@ -650,6 +662,20 @@ function openModal(person) {
         } else {
             if (filesSection) filesSection.style.display = 'none';
         }
+    }
+    
+    const globalContainer = document.getElementById('global-files');
+    if(globalContainer && globalContainer.innerHTML === '') {
+        const globalArchiveFiles = [
+            { name: "תיקיית Google Drive המלאה של הארכיון", path: "https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM" },
+            { name: "00-קראו-אותי.txt (מדריך הארכיון המלא)", path: "https://drive.google.com/file/d/1r5ctjXz-s5ogfpdvDGz4t8GOZqNEnf-w/view?usp=drivesdk" },
+            { name: "01-עצים / Family Tree-print-poster.pdf", path: "https://drive.google.com/file/d/1KgSHz2mMJ_5KkYP4OE882ZzKQW-Y0Tvp/view?usp=drivesdk" },
+            { name: "02-פוגל / פוגל-דף-הנצחה.pdf", path: "https://drive.google.com/file/d/1LXAkkSLRvkq6YUasl10JvXQLVUBJOqZU/view?usp=drivesdk" },
+            { name: "03-לנדוור / דף הקראת שמות מעודכן עם תמונות.pdf", path: "https://drive.google.com/file/d/1XSbmG457Ik6_CFm36Pp46rRVbjuYA6LQ/view?usp=drivesdk" }
+        ];
+        globalArchiveFiles.forEach(f => {
+            const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `📂 ${f.name}`; globalContainer.appendChild(a);
+        });
     }
     
     const modalBody = document.getElementById('modal-body');
