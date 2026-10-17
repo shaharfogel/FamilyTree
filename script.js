@@ -1,7 +1,7 @@
-// Version: v5.3 Perfected
+// Version: v6.0 Bulletproof
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE, CONTEXT MENU, SMART IMAGE SYNC
+   CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
 ========================================= */
 
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
@@ -30,7 +30,7 @@ function getCleanName(htmlString) {
     return tempDiv.innerText.trim();
 }
 
-// הפונקציה החכמה - מוחקת הכל פרט לאותיות בעברית ובאנגלית!
+// פונקציית ניקוי חכמה - מסירה רווחים, סוגריים, ומספרים כדי לאפשר התאמה מושלמת לשמות בדרייב
 function getLettersOnly(str) {
     if(!str) return '';
     return str.replace(/[^a-zA-Z\u0590-\u05FF]/g, '');
@@ -103,7 +103,6 @@ fetch(WEB_APP_URL)
         
         if(treeConfig.fogel && treeConfig.landwehr) {
             
-            // המילון החכם: הופך כל שם קובץ לרצף אותיות בלבד לזיהוי מדויק
             let dynamicImagesNorm = {};
             for(let key in dynamicImages) {
                 let cleanKey = getLettersOnly(key.replace(/\.[a-zA-Z0-9]+$/, ""));
@@ -184,12 +183,13 @@ function createPersonBox(personData, roleClass, colorClass) {
     let customImgHtml = '';
     let finalImgUrl = personData.customImage || (personData.images && personData.images.length > 0 ? personData.images[0] : (personData.image || null));
     
+    // הורדנו את תגית האבטחה שחסמה את התמונות כדי שיחזרו לעבוד חלק!
     if (finalImgUrl) {
         if (finalImgUrl.includes('http')) {
             const directUrl = getDirectImageUrl(finalImgUrl);
             const fallbackUrl = getFallbackUrl(finalImgUrl);
             const ts = new Date().getTime();
-            customImgHtml = `<img src="${directUrl}&t=${ts}" crossorigin="anonymous" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
+            customImgHtml = `<img src="${directUrl}&t=${ts}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
         } else {
             customImgHtml = `<img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
         }
@@ -198,7 +198,7 @@ function createPersonBox(personData, roleClass, colorClass) {
     let datesHtml = '';
     let b = personData.birth ? personData.birth.trim() : '';
     let d = personData.death ? personData.death.trim() : '';
-    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} -${d}` : b}</div>`;
+    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} - ${d}` : b}</div>`;
     
     let starHtml = personData.perished ? `<div class="holocaust-icon" title="נרצח/ה בשואה"></div>` : '';
     
@@ -572,15 +572,17 @@ if (typeof ResizeObserver !== 'undefined' && canvasEl) {
     resizeObserver.observe(canvasEl);
 }
 
+// פונקציית פתיחת החלון - עכשיו חסינה לחלוטין בפני קריסות (Safe Checks)
 function openModal(person) {
     currentEditingPerson = person;
     
     const cleanName = getCleanName(person.heb);
-    document.getElementById('modal-title').textContent = cleanName + (person.eng ? ` (${person.eng})` : '');
+    const titleEl = document.getElementById('modal-title');
+    if (titleEl) titleEl.textContent = cleanName + (person.eng ? ` (${person.eng})` : '');
     
     const storiesSection = document.getElementById('stories-section');
     const storiesList = document.getElementById('modal-stories-list');
-    storiesList.innerHTML = '';
+    if (storiesList) storiesList.innerHTML = '';
     
     if(person.story && (!person.stories || person.stories.length === 0)) {
         person.stories = [{ date: "הערת מחקר ישנה", text: person.story }];
@@ -588,38 +590,41 @@ function openModal(person) {
     
     if(person.stories && person.stories.length > 0) {
         person.stories.forEach(s => {
-            storiesList.innerHTML += `<div class="story-item"><div class="story-date">${s.date}</div><div class="story-text">${s.text}</div></div>`;
+            if (storiesList) storiesList.innerHTML += `<div class="story-item"><div class="story-date">${s.date}</div><div class="story-text">${s.text}</div></div>`;
         });
-        storiesSection.style.display = 'block';
+        if (storiesSection) storiesSection.style.display = 'block';
     } else {
-        storiesSection.style.display = 'none';
+        if (storiesSection) storiesSection.style.display = 'none';
     }
     
     let datesText = [];
     if(person.birth) datesText.push(`שנת לידה: ${person.birth}`);
     if(person.death) datesText.push(`שנת פטירה: ${person.death}`);
-    document.getElementById('modal-dates').textContent = datesText.join(' | ');
+    const datesEl = document.getElementById('modal-dates');
+    if (datesEl) datesEl.textContent = datesText.join(' | ');
     
     const profileImg = document.getElementById('modal-profile-img');
     let finalImgUrl = person.customImage || (person.images && person.images.length > 0 ? person.images[0] : (person.image || null));
     
-    if (finalImgUrl) {
-        if (finalImgUrl.includes('http')) {
-            const ts = new Date().getTime();
-            profileImg.src = `${getDirectImageUrl(finalImgUrl)}&t=${ts}`;
-            profileImg.onerror = function() { this.onerror = null; this.src = `${getFallbackUrl(finalImgUrl)}&t=${ts}`; };
+    if (profileImg) {
+        if (finalImgUrl) {
+            if (finalImgUrl.includes('http')) {
+                const ts = new Date().getTime();
+                profileImg.src = `${getDirectImageUrl(finalImgUrl)}&t=${ts}`;
+                profileImg.onerror = function() { this.onerror = null; this.src = `${getFallbackUrl(finalImgUrl)}&t=${ts}`; };
+            } else {
+                profileImg.src = finalImgUrl;
+                profileImg.onerror = function() { this.style.display = 'none'; };
+            }
+            profileImg.style.display = 'block';
         } else {
-            profileImg.src = finalImgUrl;
-            profileImg.onerror = function() { this.style.display = 'none'; };
+            profileImg.style.display = 'none';
         }
-        profileImg.style.display = 'block';
-    } else {
-        profileImg.style.display = 'none';
     }
     
     const imgSection = document.getElementById('image-section');
     const imgsContainer = document.getElementById('modal-images');
-    imgsContainer.innerHTML = '';
+    if (imgsContainer) imgsContainer.innerHTML = '';
     
     if (person.images && person.images.length > 0) {
         person.images.forEach(imgSrc => {
@@ -628,27 +633,30 @@ function openModal(person) {
             const ts = new Date().getTime();
             img.src = `${getDirectImageUrl(imgSrc)}&t=${ts}`;
             img.onerror = function() { this.onerror = null; this.src = `${getFallbackUrl(imgSrc)}&t=${ts}`; };
-            a.appendChild(img); imgsContainer.appendChild(a);
+            a.appendChild(img); if (imgsContainer) imgsContainer.appendChild(a);
         });
-        imgSection.style.display = 'block';
+        if (imgSection) imgSection.style.display = 'block';
     } else {
-        imgSection.style.display = 'none';
+        if (imgSection) imgSection.style.display = 'none';
     }
     
-    // כאן הייתה השגיאה המפורסמת - החזרנו את האלמנטים ל-HTML כדי שזה יעבוד
+    // החלק שתוקן כדי למנוע קריסות לחלוטין!
+    const filesSection = document.getElementById('files-section');
     const filesContainer = document.getElementById('modal-files');
-    filesContainer.innerHTML = '';
-    if (person.files && person.files.length > 0) {
-        person.files.forEach(f => {
-            const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `🔗 ${f.name}`; filesContainer.appendChild(a);
-        });
-        document.getElementById('files-section').style.display = 'block';
-    } else {
-        document.getElementById('files-section').style.display = 'none';
+    if (filesContainer) {
+        filesContainer.innerHTML = '';
+        if (person.files && person.files.length > 0) {
+            person.files.forEach(f => {
+                const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `🔗 ${f.name}`; filesContainer.appendChild(a);
+            });
+            if (filesSection) filesSection.style.display = 'block';
+        } else {
+            if (filesSection) filesSection.style.display = 'none';
+        }
     }
     
     const globalContainer = document.getElementById('global-files');
-    if(globalContainer.innerHTML === '') {
+    if(globalContainer && globalContainer.innerHTML === '') {
         const globalArchiveFiles = [
             { name: "תיקיית Google Drive המלאה של הארכיון", path: "https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM" },
             { name: "00-קראו-אותי.txt (מדריך הארכיון המלא)", path: "https://drive.google.com/file/d/1r5ctjXz-s5ogfpdvDGz4t8GOZqNEnf-w/view?usp=drivesdk" },
@@ -661,9 +669,13 @@ function openModal(person) {
         });
     }
     
-    document.getElementById('modal-body').style.display = 'flex';
-    document.getElementById('modal-edit').style.display = 'none';
-    document.getElementById('modal-overlay').style.display = 'flex';
+    const modalBody = document.getElementById('modal-body');
+    const modalEdit = document.getElementById('modal-edit');
+    const modalOverlay = document.getElementById('modal-overlay');
+    
+    if (modalBody) modalBody.style.display = 'flex';
+    if (modalEdit) modalEdit.style.display = 'none';
+    if (modalOverlay) modalOverlay.style.display = 'flex';
 }
 
 function enterEditMode() {
