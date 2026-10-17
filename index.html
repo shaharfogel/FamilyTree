@@ -1,4 +1,4 @@
-<!-- Version: v5.0 Sync -->
+<!-- Version: v5.1 Perfected Fix -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -15,6 +15,7 @@
     .toolbar button { background: #ffffff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #333; transition: all 0.2s; }
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
+    .toolbar button.secondary { background: #10b981; color: white; border-color: #059669; }
     
     .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; max-width: calc(100vw - 30px); }
     .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -67,6 +68,7 @@
     .c-blue { background-color: #5ce1e6 !important; }
     .c-gold { background-color: #ffc000 !important; }
     
+    /* Context Menu CSS */
     #context-menu { display: none; position: fixed; background: #fff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border: 1px solid #cbd5e1; padding: 6px 0; z-index: 10000; min-width: 170px; direction: rtl; }
     #context-menu div { padding: 10px 20px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #1e293b; transition: background 0.2s; }
     #context-menu div:hover { background: #f1f5f9; color: #2563eb; }
@@ -96,6 +98,8 @@
     .loader-spinner { width: 50px; height: 50px; border: 5px solid rgba(30,64,175,0.2); border-radius: 50%; border-top-color: #1e40af; animation: spin 1s ease-in-out infinite; }
     
     body.printing-export * { box-shadow: none !important; }
+    body.print-basic .person img { display: none !important; }
+    body.print-basic .node-dates { display: none !important; }
     body.printing-export .toggle-badge { display: none !important; }
 </style>
 </head>
@@ -112,13 +116,14 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.0 Sync</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.1 Fix</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
     <button onclick="collapseAll()">סגור הכל (-)</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר</button>
+    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
+    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
 </div>
 
 <div class="legend">
@@ -180,7 +185,7 @@
             <label>שם באנגלית (לא חובה):</label>
             <input type="text" id="editNameEng">
             
-            <label>העלאת תמונה למאגר הדרייב (תדרוס תמונה ישנה ותעביר לארכיון):</label>
+            <label>העלאת תמונה עדכנית לדרייב (תדרוס תמונה ישנה ותעביר אותה לארכיון):</label>
             <input type="file" id="editImage" accept="image/*">
             <div id="uploadStatus" style="color: green; font-size: 12px; display: none; margin-bottom: 10px;">מעלה...</div>
             
