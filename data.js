@@ -1,4 +1,4 @@
-// Version: v8.1 Sync Fix
+// Version: v9.1 Auto-Sync
 let treeDataFogel = {
     type: "couple", color: "c-root", defaultExpanded: true,
     blood: { heb: "יוכבד", eng: "Yochevet", gender: "female", tag: "שורש המשפחה", story: "אם המשפחה בראש העץ יחד עם דב. חמשת ילדיהם הם: פרויים גולדין, טוביה פייגל, הדוד ממקסיקו, פרדל פייגל (גלוברמן), ואברהם יעקב פייגל." },
