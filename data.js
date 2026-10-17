@@ -1,4 +1,4 @@
-// Version: v4.6 Perfected
+// Version: v5.1 Perfected Fix
 let treeDataFogel = {
     type: "couple", color: "c-root", defaultExpanded: true,
     blood: { heb: "יוכבד", eng: "Yochevet", gender: "female", tag: "שורש המשפחה", story: "אם המשפחה בראש העץ יחד עם דב. חמשת ילדיהם הם: פרויים גולדין, טוביה פייגל, הדוד ממקסיקו, פרדל פייגל (גלוברמן), ואברהם יעקב פייגל." },
@@ -731,13 +731,3 @@ let treeDataLandwehr = [
                     },
                     {
                         type: "single", color: "c-landwehr",
-                        blood: { 
-                            heb: "יהושוע לנדוור", eng: "Yehoshua Landwehr", gender: "male", birth: "1921", perished: true, tag: "אח של בוזיו (תאום)",
-                            images: ["https://drive.google.com/file/d/1Z3mS10WQ4WAzAmZZ65UnI9GVUbjoXBZB/view?usp=drivesdk"]
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-];
