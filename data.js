@@ -1,4 +1,4 @@
-// Version: v5.2 Perfected Sync
+// Version: v6.0 Bulletproof
 let treeDataFogel = {
     type: "couple", color: "c-root", defaultExpanded: true,
     blood: { heb: "יוכבד", eng: "Yochevet", gender: "female", tag: "שורש המשפחה", story: "אם המשפחה בראש העץ יחד עם דב. חמשת ילדיהם הם: פרויים גולדין, טוביה פייגל, הדוד ממקסיקו, פרדל פייגל (גלוברמן), ואברהם יעקב פייגל." },
