@@ -1,4 +1,4 @@
-// Version: v6.0 Bulletproof
+// Version: v7.0 Cache Busting Fix
 /* =========================================
    LOGIC SECTION (App functionality)
    CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
@@ -183,7 +183,6 @@ function createPersonBox(personData, roleClass, colorClass) {
     let customImgHtml = '';
     let finalImgUrl = personData.customImage || (personData.images && personData.images.length > 0 ? personData.images[0] : (personData.image || null));
     
-    // הורדנו את תגית האבטחה שחסמה את התמונות כדי שיחזרו לעבוד חלק!
     if (finalImgUrl) {
         if (finalImgUrl.includes('http')) {
             const directUrl = getDirectImageUrl(finalImgUrl);
@@ -198,7 +197,7 @@ function createPersonBox(personData, roleClass, colorClass) {
     let datesHtml = '';
     let b = personData.birth ? personData.birth.trim() : '';
     let d = personData.death ? personData.death.trim() : '';
-    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} - ${d}` : b}</div>`;
+    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} -${d}` : b}</div>`;
     
     let starHtml = personData.perished ? `<div class="holocaust-icon" title="נרצח/ה בשואה"></div>` : '';
     
@@ -572,7 +571,6 @@ if (typeof ResizeObserver !== 'undefined' && canvasEl) {
     resizeObserver.observe(canvasEl);
 }
 
-// פונקציית פתיחת החלון - עכשיו חסינה לחלוטין בפני קריסות (Safe Checks)
 function openModal(person) {
     currentEditingPerson = person;
     
@@ -640,7 +638,6 @@ function openModal(person) {
         if (imgSection) imgSection.style.display = 'none';
     }
     
-    // החלק שתוקן כדי למנוע קריסות לחלוטין!
     const filesSection = document.getElementById('files-section');
     const filesContainer = document.getElementById('modal-files');
     if (filesContainer) {
