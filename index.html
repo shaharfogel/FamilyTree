@@ -1,4 +1,4 @@
-<!-- Version: v8.1 Sync Fix -->
+<!-- Version: v9.0 ID Engine -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -107,7 +107,7 @@
 
 <div id="initial-loader">
     <div class="loader-spinner"></div>
-    <div>טוען ומסנכרן את מסד הנתונים והתמונות מהענן... ⏳</div>
+    <div>טוען ומסנכרן מזהים ותמונות חכמות... ⏳</div>
 </div>
 
 <div id="snapshot-loader">
@@ -116,7 +116,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v8.1 Sync Fix</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v9.0 ID-Engine</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
@@ -153,6 +153,7 @@
     <div class="danger" onclick="contextDeleteNode()">🗑️ מחק אדם מהעץ...</div>
 </div>
 
+<!-- חלון עריכה עם כל האלמנטים בפנים - מונע שגיאות innerHTML of null! -->
 <div id="modal-overlay" onclick="closeModal()">
     <div id="modal-content" onclick="event.stopPropagation()">
         <div id="modal-header">
@@ -191,7 +192,7 @@
             <label>שם באנגלית (לא חובה):</label>
             <input type="text" id="editNameEng">
             
-            <label>העלאת תמונה למאגר הדרייב (תדרוס תמונה ישנה ותעביר לארכיון):</label>
+            <label>העלאת תמונה למאגר (תקבל ID ייחודי בשם הקובץ):</label>
             <input type="file" id="editImage" accept="image/*">
             <div id="uploadStatus" style="color: green; font-size: 12px; display: none; margin-bottom: 10px;">מעלה...</div>
             
@@ -212,13 +213,13 @@
             <label>הוסף זיכרון או סיפור חדש ליומן:</label>
             <textarea id="editNewStory" rows="3" placeholder="כתוב כאן רשמים, סיפורים ותיעוד שיישמר..."></textarea>
 
-            <button class="edit-btn" onclick="saveEdit()">שמור הכל במסד הנתונים בענן ☁️</button>
+            <button class="edit-btn" onclick="saveEdit()">שמור הכל למסד הנתונים ☁️</button>
             <button class="cancel-btn" onclick="cancelEdit()">ביטול</button>
         </div>
     </div>
 </div>
 
-<script src="data.js?v=8.1"></script>
-<script src="script.js?v=8.1"></script>
+<script src="data.js?v=9.0"></script>
+<script src="script.js?v=9.0"></script>
 </body>
 </html>
