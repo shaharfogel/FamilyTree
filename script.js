@@ -200,7 +200,7 @@ function createPersonBox(personData, roleClass, colorClass) {
     let datesHtml = '';
     let b = personData.birth ? personData.birth.trim() : '';
     let d = personData.death ? personData.death.trim() : '';
-    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} -${d}` : b}</div>`;
+    if (b || d) datesHtml = `<div class="node-dates">${d ? `${b} - ${d}` : b}</div>`;
     
     let starHtml = personData.perished ? `<div class="holocaust-icon" title="נרצח/ה בשואה"></div>` : '';
     
@@ -584,4 +584,420 @@ function openModal(person) {
     
     const cleanName = getCleanName(person.heb);
     const titleEl = document.getElementById('modal-title');
-    if (titleEl)
+    if (titleEl) titleEl.textContent = cleanName + (person.eng ? ` (${person.eng})` : '');
+    
+    const storiesSection = document.getElementById('stories-section');
+    const storiesList = document.getElementById('modal-stories-list');
+    if (storiesList) storiesList.innerHTML = '';
+    
+    if(person.story && (!person.stories || person.stories.length === 0)) {
+        person.stories = [{ date: "הערת מחקר ישנה", text: person.story }];
+    }
+    
+    if(person.stories && person.stories.length > 0) {
+        person.stories.forEach(s => {
+            if (storiesList) storiesList.innerHTML += `<div class="story-item"><div class="story-date">${s.date}</div><div class="story-text">${s.text}</div></div>`;
+        });
+        if (storiesSection) storiesSection.style.display = 'block';
+    } else {
+        if (storiesSection) storiesSection.style.display = 'none';
+    }
+    
+    let datesText = [];
+    if(person.birth) datesText.push(`שנת לידה: ${person.birth}`);
+    if(person.death) datesText.push(`שנת פטירה: ${person.death}`);
+    const datesEl = document.getElementById('modal-dates');
+    if (datesEl) datesEl.textContent = datesText.join(' | ');
+    
+    const profileImg = document.getElementById('modal-profile-img');
+    let finalImgUrl = person.customImage || (person.images && person.images.length > 0 ? person.images[0] : (person.image || null));
+    
+    if (profileImg) {
+        if (finalImgUrl) {
+            if (finalImgUrl.includes('http')) {
+                const ts = new Date().getTime();
+                profileImg.src = `${getDirectImageUrl(finalImgUrl)}&t=${ts}`;
+                profileImg.onerror = function() { this.onerror = null; this.src = `${getFallbackUrl(finalImgUrl)}&t=${ts}`; };
+            } else {
+                profileImg.src = finalImgUrl;
+                profileImg.onerror = function() { this.style.display = 'none'; };
+            }
+            profileImg.style.display = 'block';
+        } else {
+            profileImg.style.display = 'none';
+        }
+    }
+    
+    const imgSection = document.getElementById('image-section');
+    const imgsContainer = document.getElementById('modal-images');
+    if (imgsContainer) imgsContainer.innerHTML = '';
+    
+    if (person.images && person.images.length > 0) {
+        // מציג רק תמונות שהן לא תמונת הפרופיל הראשית (Headshot)
+        let uniqueImages = person.images.filter(imgSrc => imgSrc !== person.customImage);
+        
+        if (uniqueImages.length > 0) {
+            uniqueImages.forEach(imgSrc => {
+                const a = document.createElement('a'); a.href = imgSrc; a.target = '_blank';
+                const img = document.createElement('img'); img.className = 'modal-img';
+                const ts = new Date().getTime();
+                img.src = `${getDirectImageUrl(imgSrc)}&t=${ts}`;
+                img.onerror = function() { this.onerror = null; this.src = `${getFallbackUrl(imgSrc)}&t=${ts}`; };
+                a.appendChild(img); if (imgsContainer) imgsContainer.appendChild(a);
+            });
+            if (imgSection) imgSection.style.display = 'block';
+        } else {
+            if (imgSection) imgSection.style.display = 'none';
+        }
+    } else {
+        if (imgSection) imgSection.style.display = 'none';
+    }
+    
+    const filesSection = document.getElementById('files-section');
+    const filesContainer = document.getElementById('modal-files');
+    if (filesContainer) {
+        filesContainer.innerHTML = '';
+        if (person.files && person.files.length > 0) {
+            person.files.forEach(f => {
+                const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `🔗 ${f.name}`; filesContainer.appendChild(a);
+            });
+            if (filesSection) filesSection.style.display = 'block';
+        } else {
+            if (filesSection) filesSection.style.display = 'none';
+        }
+    }
+    
+    const modalBody = document.getElementById('modal-body');
+    const modalEdit = document.getElementById('modal-edit');
+    const modalOverlay = document.getElementById('modal-overlay');
+    
+    if (modalBody) modalBody.style.display = 'flex';
+    if (modalEdit) modalEdit.style.display = 'none';
+    if (modalOverlay) modalOverlay.style.display = 'flex';
+}
+
+function enterEditMode() {
+    const elBody = document.getElementById('modal-body');
+    const elEdit = document.getElementById('modal-edit');
+    if(elBody) elBody.style.display = 'none';
+    if(elEdit) elEdit.style.display = 'block';
+    
+    const cleanName = getCleanName(currentEditingPerson.heb);
+
+    const hebEl = document.getElementById('editNameHeb'); if(hebEl) hebEl.value = cleanName || '';
+    const engEl = document.getElementById('editNameEng'); if(engEl) engEl.value = currentEditingPerson.eng || '';
+    const birthEl = document.getElementById('editBirth'); if(birthEl) birthEl.value = currentEditingPerson.birth || '';
+    const deathEl = document.getElementById('editDeath'); if(deathEl) deathEl.value = currentEditingPerson.death || '';
+    const imgEl = document.getElementById('editImage'); if(imgEl) imgEl.value = '';
+    
+    const extraImgEl = document.getElementById('editExtraImages'); if(extraImgEl) extraImgEl.value = '';
+    const extraFileEl = document.getElementById('editExtraFiles'); if(extraFileEl) extraFileEl.value = '';
+    
+    const storyEl = document.getElementById('editNewStory'); if(storyEl) storyEl.value = '';
+    
+    const perishedEl = document.getElementById('editPerished'); 
+    if(perishedEl) perishedEl.checked = currentEditingPerson.perished === true;
+    
+    if (currentEditingPerson.gender === 'female') {
+        const rad = document.querySelector('input[name="editGender"][value="female"]');
+        if(rad) rad.checked = true;
+    }
+    else if (currentEditingPerson.gender === 'male') {
+        const rad = document.querySelector('input[name="editGender"][value="male"]');
+        if(rad) rad.checked = true;
+    }
+    else {
+        document.querySelectorAll('input[name="editGender"]').forEach(el => el.checked = false);
+    }
+}
+
+function cancelEdit() {
+    const elBody = document.getElementById('modal-body');
+    const elEdit = document.getElementById('modal-edit');
+    if(elEdit) elEdit.style.display = 'none';
+    if(elBody) elBody.style.display = 'flex';
+}
+
+function closeModal() { 
+    const overlay = document.getElementById('modal-overlay');
+    if(overlay) overlay.style.display = 'none'; 
+}
+
+const compressImage = async (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxWidth = 500;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = () => reject('שגיאה בפענוח התמונה');
+        };
+        reader.onerror = () => reject('שגיאה בקריאת הקובץ');
+    });
+};
+
+async function saveEdit() {
+    const hebEl = document.getElementById('editNameHeb');
+    let newHeb = hebEl ? hebEl.value : currentEditingPerson.heb;
+
+    if (!currentEditingPerson.originalHeb) {
+        currentEditingPerson.originalHeb = getCleanName(currentEditingPerson.heb);
+    }
+    currentEditingPerson.heb = newHeb;
+    
+    const engEl = document.getElementById('editNameEng'); if(engEl) currentEditingPerson.eng = engEl.value;
+    const birthEl = document.getElementById('editBirth'); if(birthEl) currentEditingPerson.birth = birthEl.value;
+    const deathEl = document.getElementById('editDeath'); if(deathEl) currentEditingPerson.death = deathEl.value;
+    const perishedEl = document.getElementById('editPerished'); if(perishedEl) currentEditingPerson.perished = perishedEl.checked;
+    
+    const storyEl = document.getElementById('editNewStory');
+    if(storyEl && storyEl.value.trim() !== '') {
+        if(!currentEditingPerson.stories) currentEditingPerson.stories = [];
+        currentEditingPerson.stories.unshift({ date: new Date().toLocaleDateString('he-IL'), text: storyEl.value.trim() });
+    }
+    
+    const genderEl = document.querySelector('input[name="editGender"]:checked');
+    if (genderEl) currentEditingPerson.gender = genderEl.value;
+
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    // 1. העלאת Headshot
+    const fileInput = document.getElementById('editImage');
+    if (fileInput && fileInput.files.length > 0) {
+        if(uploadStatus) { uploadStatus.style.display = 'block'; uploadStatus.textContent = 'מכווץ ושומר תמונת פרופיל...'; }
+        try {
+            const file = fileInput.files[0];
+            const base64 = await compressImage(file);
+            
+            let oldImg = currentEditingPerson.customImage || (currentEditingPerson.images && currentEditingPerson.images.length > 0 ? currentEditingPerson.images[0] : null);
+            let oldImgId = null;
+            if (oldImg) {
+                const match = oldImg.match(/id=([a-zA-Z0-9_-]+)/) || oldImg.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) oldImgId = match[1];
+            }
+
+            const uploadResponse = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: 'uploadImage', 
+                    base64: base64, 
+                    mimeType: 'image/jpeg', 
+                    personName: newHeb, 
+                    nodeId: currentEditingPerson.id,
+                    oldImageId: oldImgId 
+                })
+            });
+            const textResp = await uploadResponse.text();
+            let uploadResult = JSON.parse(textResp);
+            
+            if (uploadResult && uploadResult.id) {
+                currentEditingPerson.customImage = `https://drive.google.com/uc?export=view&id=${uploadResult.id}`;
+            } else {
+                alert('שגיאה מהשרת: ' + (uploadResult.error || 'לא התקבל לינק.'));
+            }
+        } catch(e) {
+            console.error("שגיאה בהעלאת תמונת פנים: ", e);
+        }
+    }
+
+    // 2. העלאת תמונות נוספות לגלריה
+    const extraImagesInput = document.getElementById('editExtraImages');
+    if (extraImagesInput && extraImagesInput.files.length > 0) {
+        if(uploadStatus) { uploadStatus.style.display = 'block'; uploadStatus.textContent = `מעלה ${extraImagesInput.files.length} תמונות לגלריה...`; }
+        if (!currentEditingPerson.images) currentEditingPerson.images = [];
+        
+        for (let i = 0; i < extraImagesInput.files.length; i++) {
+            let file = extraImagesInput.files[i];
+            try {
+                let base64 = await compressImage(file);
+                let uploadResponse = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'uploadExtraFile', 
+                        base64: base64, 
+                        mimeType: 'image/jpeg', 
+                        fileName: file.name, 
+                        fileCategory: 'image',
+                        nodeId: currentEditingPerson.id 
+                    })
+                });
+                let textResp = await uploadResponse.text();
+                let uploadResult = JSON.parse(textResp);
+                if (uploadResult && uploadResult.url) {
+                    currentEditingPerson.images.push(uploadResult.url);
+                }
+            } catch(e) {
+                console.error("שגיאה בהעלאת תמונת גלריה: ", e);
+            }
+        }
+    }
+
+    // 3. העלאת מסמכים וקבצים
+    const extraFilesInput = document.getElementById('editExtraFiles');
+    if (extraFilesInput && extraFilesInput.files.length > 0) {
+        if(uploadStatus) { uploadStatus.style.display = 'block'; uploadStatus.textContent = `מעלה ${extraFilesInput.files.length} קבצים ומסמכים...`; }
+        if (!currentEditingPerson.files) currentEditingPerson.files = [];
+        
+        for (let i = 0; i < extraFilesInput.files.length; i++) {
+            let file = extraFilesInput.files[i];
+            try {
+                let base64 = await new Promise((resolve, reject) => {
+                    let reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+                
+                let uploadResponse = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        action: 'uploadExtraFile', 
+                        base64: base64, 
+                        mimeType: file.type, 
+                        fileName: file.name, 
+                        fileCategory: 'file',
+                        nodeId: currentEditingPerson.id 
+                    })
+                });
+                let textResp = await uploadResponse.text();
+                let uploadResult = JSON.parse(textResp);
+                if (uploadResult && uploadResult.url) {
+                    currentEditingPerson.files.push({ name: file.name, path: uploadResult.url });
+                }
+            } catch(e) {
+                console.error("שגיאה בהעלאת מסמך: ", e);
+            }
+        }
+    }
+
+    if(uploadStatus) { uploadStatus.style.display = 'none'; }
+
+    await saveToDrive();
+    closeModal();
+    renderTree();
+}
+
+async function saveToDrive() {
+    const loadStatus = document.getElementById('loadingStatus');
+    try {
+        if(loadStatus) { loadStatus.textContent = 'שומר ל-DB... ☁️'; loadStatus.style.color = '#b83b5e'; }
+        await fetch(WEB_APP_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'saveConfig', data: { fogel: treeDataFogel, landwehr: treeDataLandwehr } })
+        });
+        if(loadStatus) { loadStatus.textContent = 'שמור במסד הנתונים בענן ✅'; loadStatus.style.color = 'green'; }
+    } catch(e) {
+        console.error(e);
+        if(loadStatus) { loadStatus.textContent = 'שגיאת שמירה ❌'; }
+    }
+}
+
+function updateTransform() {
+    if(!canvasEl) return;
+    canvasEl.style.transition = 'none';
+    canvasEl.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    drawSVGConnections();
+    requestAnimationFrame(() => { canvasEl.style.transition = 'transform 0.06s ease-out'; });
+}
+
+function zoom(delta, focalX, focalY) {
+    const newScale = Math.min(Math.max(0.12, scale + delta), 2.5);
+    if (newScale === scale) return;
+    if (focalX !== undefined && focalY !== undefined) {
+        const vpRect = document.getElementById('viewport').getBoundingClientRect();
+        const cx = vpRect.left + vpRect.width / 2 + pointX;
+        const cy = vpRect.top + pointY;
+        const ratio = newScale / scale;
+        pointX += (focalX - cx) * (1 - ratio);
+        pointY += (focalY - cy) * (1 - ratio);
+    }
+    scale = newScale;
+    updateTransform();
+}
+
+function fitToScreen() {
+    if(!canvasEl) return;
+    canvasEl.style.transform = 'none';
+    drawSVGConnections();
+    const rect = canvasEl.getBoundingClientRect();
+    scale = Math.min(0.95, Math.max(0.16, (window.innerWidth * 0.94) / rect.width));
+    pointX = 0; pointY = 20; updateTransform();
+}
+
+function resetDefaultView() { document.querySelectorAll('.tree li').forEach(li => { if (li.querySelector(':scope > ul')) { const shouldExpand = li.dataset.defaultExpanded === 'true'; const badge = li.querySelector(':scope > .family-unit > .toggle-badge'); if (shouldExpand) { li.classList.remove('collapsed'); if (badge) badge.textContent = '-'; } else { li.classList.add('collapsed'); if (badge) badge.textContent = '+'; } } }); fitToScreen(); }
+function expandAll() { document.querySelectorAll('.tree li.collapsed').forEach(li => { li.classList.remove('collapsed'); const badge = li.querySelector(':scope > .family-unit > .toggle-badge'); if (badge) badge.textContent = '-'; }); fitToScreen(); }
+function collapseAll() { document.querySelectorAll('.tree > ul > li li').forEach(li => { if (li.querySelector(':scope > ul')) { li.classList.add('collapsed'); const badge = li.querySelector(':scope > .family-unit > .toggle-badge'); if (badge) badge.textContent = '+'; } }); fitToScreen(); }
+
+(function() {
+    const vp = document.getElementById('viewport');
+    if(!vp) return;
+    let pinchDistance = null; let mobilePanning = false; let mStartX = 0; let mStartY = 0;
+    vp.addEventListener('mousedown', function(e) { if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#context-menu') || e.target.closest('#modal-content')) return; mobilePanning = true; vp.classList.add('grabbing'); mStartX = e.clientX - pointX; mStartY = e.clientY - pointY; });
+    window.addEventListener('mousemove', function(e) { if (!mobilePanning || e.touches) return; pointX = e.clientX - mStartX; pointY = e.clientY - mStartY; updateTransform(); });
+    window.addEventListener('mouseup', function() { mobilePanning = false; vp.classList.remove('grabbing'); });
+    vp.addEventListener('wheel', function(e) { if (e.target.closest('#modal-content') || e.target.closest('#context-menu')) return; e.preventDefault(); zoom(e.deltaY < 0 ? 0.08 : -0.08, e.clientX, e.clientY); }, { passive: false });
+    vp.addEventListener('touchstart', function(e) { if (e.target.closest('.person') || e.target.closest('.toggle-badge') || e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#context-menu') || e.target.closest('#modal-content')) return; if (e.touches.length === 1) { mobilePanning = true; mStartX = e.touches[0].clientX - pointX; mStartY = e.touches[0].clientY - pointY; } else if (e.touches.length === 2) { mobilePanning = false; pinchDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); } }, {passive: false});
+    vp.addEventListener('touchmove', function(e) { if (e.target.closest('.toolbar') || e.target.closest('.legend') || e.target.closest('#context-menu') || e.target.closest('#modal-content')) return; if (e.touches.length === 1 && mobilePanning) { e.preventDefault(); pointX = e.touches[0].clientX - mStartX; pointY = e.touches[0].clientY - mStartY; updateTransform(); } else if (e.touches.length === 2 && pinchDistance !== null) { e.preventDefault(); const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); const delta = (currentDist - pinchDistance) * 0.005; const focalX = (e.touches[0].clientX + e.touches[1].clientX) / 2; const focalY = (e.touches[0].clientY + e.touches[1].clientY) / 2; zoom(delta, focalX, focalY); pinchDistance = currentDist; } }, {passive: false});
+    vp.addEventListener('touchend', function(e) { if (e.touches.length === 0) { mobilePanning = false; pinchDistance = null; } else if (e.touches.length === 1) { mobilePanning = true; mStartX = e.touches[0].clientX - pointX; mStartY = e.touches[0].clientY - pointY; pinchDistance = null; } });
+})();
+
+function exportTreeAsImage(mode) {
+    var loader = document.getElementById('snapshot-loader'); var loaderText = document.getElementById('loader-text');
+    document.body.classList.remove('print-basic', 'printing-export');
+    if(loader) loader.style.display = 'flex'; 
+    if(loaderText) loaderText.textContent = "מכין את העץ לצילום איכותי... ⏳";
+    document.body.classList.add('printing-export');
+    if (mode === 'basic') document.body.classList.add('print-basic');
+    var canvas = document.getElementById('canvas');
+    var oldScale = scale; var oldX = pointX; var oldY = pointY;
+    scale = 1; pointX = 0; pointY = 0;
+    canvas.style.transition = 'none'; canvas.style.transform = 'none';
+    if (typeof drawSVGConnections === 'function') drawSVGConnections();
+    setTimeout(function() {
+        var w = canvas.scrollWidth; var h = canvas.scrollHeight;
+        var svg = document.getElementById('svg-lines');
+        if(svg) { svg.style.width = w + 'px'; svg.style.height = h + 'px'; }
+        if (typeof drawSVGConnections === 'function') drawSVGConnections();
+        if(loaderText) loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
+        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h }).then(function(renderedCanvas) {
+            restoreView(oldScale, oldX, oldY, svg); 
+            if(loaderText) loaderText.textContent = "פותח חלון שמירה... 💾";
+            renderedCanvas.toBlob(function(blob) { 
+                if(loader) loader.style.display = 'none'; 
+                if (!blob) { alert("שגיאה ביצירת הקובץ."); return; } 
+                var filename = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png'; 
+                var url = URL.createObjectURL(blob); 
+                var a = document.createElement('a'); a.href = url; a.download = filename; 
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); 
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000); 
+            }, 'image/png');
+        }).catch(function(err) { 
+            console.error(err); restoreView(oldScale, oldX, oldY, svg); 
+            if(loader) loader.style.display = 'none'; 
+            alert("שגיאה ביצירת התמונה: " + err.message); 
+        });
+    }, 600);
+}
+
+function restoreView(oldScale, oldX, oldY, svg) { 
+    document.body.classList.remove('print-basic', 'printing-export'); 
+    if(svg) { svg.style.width = '100%'; svg.style.height = '100%'; }
+    scale = oldScale; pointX = oldX; pointY = oldY; updateTransform(); 
+}
+window.addEventListener('resize', () => { drawSVGConnections(); });
+window.addEventListener('load', () => setTimeout(drawSVGConnections, 500));
