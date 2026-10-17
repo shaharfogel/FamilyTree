@@ -4,8 +4,8 @@
    CLOUD DATABASE OVERRIDE & CONTEXT MENU
 ========================================= */
 
-// ודא שה-URL הבא הוא באמת מה-New Deployment שעשית ב-Apps Script.
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZDjVPjnW_-kTHSSD0ccBX4ez-y9QrQ7M7Vmmg4WDZnPhC5YQr4VxbGyqXrBh4iaHbwg/exec';
+// הלינק המעודכן לשרת שלך!
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
 
 function getDirectImageUrl(url) {
     if (!url) return '';
@@ -146,6 +146,7 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
     div.className = `person ${roleClass} ${extraClass} ${colorClass} ${genderClass}`;
     
+    // קריטי! מוודאים שיש ID לכל אדם.
     if (!personData.id) personData.id = 'node-' + Math.random().toString(36).substr(2, 9);
     div.id = personData.id;
     
