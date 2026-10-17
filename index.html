@@ -1,4 +1,4 @@
-<!-- Version: v5.1 Perfected Fix -->
+<!-- Version: v5.2 Perfected Sync -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -36,17 +36,17 @@
     li.custom-svg-row > ul { padding-top: 68px !important; }
 
     .wing-title { direction: rtl; text-align: center; font-weight: 800; font-size: 16px; padding: 6px 18px; border-radius: 8px; margin-bottom: 14px; background: #fff; border: 2px solid #444; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    .family-unit { display: inline-flex; align-items: center; justify-content: center; position: relative; direction: ltr; padding: 2px; border-radius: 8px; }
+    .family-unit { display: inline-flex; align-items: center; justify-content: center; position: relative; direction: ltr; padding: 2px; border-radius: 8px; z-index: 50;}
     
-    .person { direction: rtl; padding: 7px 10px; color: #111; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fff; min-width: 90px; max-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; transition: transform 0.15s, box-shadow 0.15s; text-align: center; line-height: 1.2; cursor: pointer; z-index: 50; border-radius: 4px; pointer-events: auto; }
+    .person { direction: rtl; padding: 7px 10px; color: #111; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fff; min-width: 90px; max-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; transition: transform 0.15s, box-shadow 0.15s; text-align: center; line-height: 1.2; cursor: pointer; z-index: 100; border-radius: 4px; pointer-events: auto; }
     .person.male-node { border-radius: 0 !important; }
     .person.female-node { border-radius: 20px !important; }
-    .person.blood { border: 2px solid #111 !important; font-weight: 700; z-index: 51; }
-    .person.spouse { border: 1.5px dashed #333 !important; opacity: 0.96; z-index: 50; }
-    .person.cousin-wife { border: 2px solid #111 !important; font-weight: 700; z-index: 51; }
-    .person:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.25); outline: 2px solid #2563eb; z-index: 60; }
+    .person.blood { border: 2px solid #111 !important; font-weight: 700; }
+    .person.spouse { border: 1.5px dashed #333 !important; opacity: 0.96; }
+    .person.cousin-wife { border: 2px solid #111 !important; font-weight: 700; }
+    .person:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.25); outline: 2px solid #2563eb; z-index: 110; }
     
-    .holocaust-icon { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 85,75 15,75" fill="%23FFCC00" stroke="black" stroke-width="6"/><polygon points="50,90 15,25 85,25" fill="%23FFCC00" stroke="black" stroke-width="6"/></svg>'); background-size: contain; background-repeat: no-repeat; z-index: 65; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.3)); pointer-events: none; }
+    .holocaust-icon { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 85,75 15,75" fill="%23FFCC00" stroke="black" stroke-width="6"/><polygon points="50,90 15,25 85,25" fill="%23FFCC00" stroke="black" stroke-width="6"/></svg>'); background-size: contain; background-repeat: no-repeat; z-index: 120; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.3)); pointer-events: none; }
     .person .heb { font-weight: 700; font-size: 11.5px; color: #000; margin-bottom: 2px; }
     .person .eng { font-size: 9.5px; color: #111; font-weight: 600; direction: ltr; }
     .node-dates { font-size: 9.5px; margin-top: 3px; font-weight: 700; color: #444; direction: ltr; }
@@ -58,7 +58,7 @@
     .marriage-bridge .m-line { width: 100%; height: 1.8px; background-color: #111; margin: 2px 0; }
     .marriage-bridge .m-text { font-size: 7.5px; color: #000; font-weight: 700; white-space: nowrap; line-height: 1.05; }
     
-    .toggle-badge { position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; font-weight: 700; width: 19px; height: 19px; line-height: 16px; text-align: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 55; cursor: pointer; pointer-events: auto; }
+    .toggle-badge { position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; font-weight: 700; width: 19px; height: 19px; line-height: 16px; text-align: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 105; cursor: pointer; pointer-events: auto; }
     li.collapsed > ul { display: none !important; }
     li.collapsed > .family-unit { background: rgba(0,0,0,0.06); box-shadow: 0 0 0 2px rgba(0,0,0,0.18); }
     
@@ -116,7 +116,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.1 Fix</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.2 Perfected Sync</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
@@ -185,7 +185,7 @@
             <label>שם באנגלית (לא חובה):</label>
             <input type="text" id="editNameEng">
             
-            <label>העלאת תמונה עדכנית לדרייב (תדרוס תמונה ישנה ותעביר אותה לארכיון):</label>
+            <label>העלאת תמונה למאגר הדרייב (תדרוס תמונה ישנה ותעביר לארכיון):</label>
             <input type="file" id="editImage" accept="image/*">
             <div id="uploadStatus" style="color: green; font-size: 12px; display: none; margin-bottom: 10px;">מעלה...</div>
             
