@@ -1,4 +1,4 @@
-// Version: v5.1 Perfected Fix
+// Version: v5.2 Perfected Sync
 /* =========================================
    LOGIC SECTION (App functionality)
    CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
@@ -30,6 +30,12 @@ function getCleanName(htmlString) {
     return tempDiv.innerText.trim();
 }
 
+// פונקציית נירמול חכמה - מוחקת סוגריים ורווחים כדי שתמונות יתאימו במדויק תמיד
+function normalizeName(str) {
+    if(!str) return '';
+    return str.replace(/[^\u0590-\u05FFa-zA-Z0-9]/g, '');
+}
+
 let currentEditingPerson = null;
 let contextTargetId = null;
 let svgConnections = [];
@@ -41,8 +47,8 @@ function buildCloudMap(cloudData, mapById, mapByName) {
         if (!p) return;
         if (p.id && !p.id.startsWith('node-')) mapById.set(p.id, p);
         if (p.heb) {
-            if (p.originalHeb) mapByName.set(p.originalHeb.trim(), p);
-            mapByName.set(getCleanName(p.heb), p);
+            if (p.originalHeb) mapByName.set(normalizeName(p.originalHeb), p);
+            mapByName.set(normalizeName(p.heb), p);
         }
         if (p.floatingParents) p.floatingParents.forEach(add);
         if (p.floatingSiblings) p.floatingSiblings.forEach(add);
@@ -64,7 +70,7 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
         if (!p) return;
         let cloudMatch = null;
         if (p.id && !p.id.startsWith('node-')) cloudMatch = mapById.get(p.id);
-        if (!cloudMatch && p.heb) cloudMatch = mapByName.get(getCleanName(p.heb));
+        if (!cloudMatch && p.heb) cloudMatch = mapByName.get(normalizeName(p.heb));
         
         if (cloudMatch) {
             const fields = ['heb', 'eng', 'birth', 'death', 'gender', 'customImage', 'perished', 'images', 'files', 'stories', 'tag', 'originalHeb'];
@@ -97,6 +103,12 @@ fetch(WEB_APP_URL)
         
         if(treeConfig.fogel && treeConfig.landwehr) {
             
+            // יצירת מילון תמונות דינמי חכם - אדיש לרווחים וסוגריים
+            let dynamicImagesNorm = {};
+            for(let key in dynamicImages) {
+                dynamicImagesNorm[normalizeName(key)] = dynamicImages[key];
+            }
+
             const mapById = new Map();
             const mapByName = new Map();
             const processCloud = (c) => {
@@ -111,9 +123,9 @@ fetch(WEB_APP_URL)
 
             function applyDynamicImages(node) {
                 if(!node) return;
-                let cName = getCleanName(node.heb);
-                if (cName && dynamicImages[cName]) {
-                    node.customImage = dynamicImages[cName].url;
+                let cName = normalizeName(getCleanName(node.heb));
+                if (cName && dynamicImagesNorm[cName]) {
+                    node.customImage = dynamicImagesNorm[cName].url;
                     node.images = [];
                 }
                 if(node.floatingParents) node.floatingParents.forEach(applyDynamicImages);
@@ -176,7 +188,8 @@ function createPersonBox(personData, roleClass, colorClass) {
             const directUrl = getDirectImageUrl(finalImgUrl);
             const fallbackUrl = getFallbackUrl(finalImgUrl);
             const ts = new Date().getTime();
-            customImgHtml = `<img src="${directUrl}&t=${ts}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
+            // crossorigin חובה בשביל פוסטר!
+            customImgHtml = `<img src="${directUrl}&t=${ts}" crossorigin="anonymous" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
         } else {
             customImgHtml = `<img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
         }
@@ -191,14 +204,17 @@ function createPersonBox(personData, roleClass, colorClass) {
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
     
-    div.addEventListener('click', (e) => { 
+    // קליקים שעובדים מעולה וחסינים לפאנינג
+    div.onclick = function(e) {
+        e.preventDefault(); 
         e.stopPropagation(); 
         openModal(personData); 
-    });
-    div.addEventListener('contextmenu', (e) => {
-        e.preventDefault(); e.stopPropagation();
+    };
+    div.oncontextmenu = function(e) {
+        e.preventDefault(); 
+        e.stopPropagation();
         handleContextMenu(e, personData.id);
-    });
+    };
     
     return div;
 }
@@ -347,12 +363,12 @@ function buildTreeNode(item) {
         item.children.forEach(child => ul.appendChild(buildTreeNode(child)));
         li.appendChild(ul);
         
-        badge.addEventListener('click', (e) => {
+        badge.onclick = function(e) {
             e.stopPropagation();
             li.classList.toggle('collapsed');
             badge.textContent = li.classList.contains('collapsed') ? '+' : '-';
             drawSVGConnections();
-        });
+        };
     }
     return li;
 }
@@ -835,15 +851,7 @@ function exportTreeAsImage(mode) {
         svg.style.width = w + 'px'; svg.style.height = h + 'px';
         if (typeof drawSVGConnections === 'function') drawSVGConnections();
         loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
-        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h, onclone: function(clonedDoc) { 
-            var imgs = clonedDoc.querySelectorAll('.person img'); 
-            for(var i = 0; i < imgs.length; i++) { 
-                var img = imgs[i]; 
-                if (img.src && img.src.indexOf('drive.google.com') !== -1) { 
-                    img.src = 'https://wsrv.nl/?url=' + encodeURIComponent(img.src) + '&w=120&h=120&fit=cover&mask=circle'; 
-                } 
-            } 
-        } }).then(function(renderedCanvas) {
+        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h }).then(function(renderedCanvas) {
             restoreView(oldScale, oldX, oldY, svg); loaderText.textContent = "פותח חלון שמירה... 💾";
             renderedCanvas.toBlob(function(blob) { loader.style.display = 'none'; if (!blob) { alert("שגיאה ביצירת הקובץ."); return; } var filename = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png'; var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function() { URL.revokeObjectURL(url); }, 1000); }, 'image/png');
         }).catch(function(err) { console.error(err); restoreView(oldScale, oldX, oldY, svg); loader.style.display = 'none'; alert("שגיאה ביצירת התמונה: " + err.message); });
