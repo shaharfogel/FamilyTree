@@ -1,4 +1,4 @@
-<!-- Version: v4.2 Entities -->
+<!-- Version: v4.5 Stable -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -15,7 +15,6 @@
     .toolbar button { background: #ffffff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #333; transition: all 0.2s; }
     .toolbar button:hover { background: #e9ecef; border-color: #999; }
     .toolbar button.primary { background: #2563eb; color: white; border-color: #1d4ed8; }
-    .toolbar button.secondary { background: #10b981; color: white; border-color: #059669; }
     
     .legend { position: fixed; bottom: 15px; right: 15px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 8px; font-size: 12px; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.12); border: 1px solid #ddd; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; max-width: calc(100vw - 30px); }
     .legend-item { display: flex; align-items: center; gap: 6px; }
@@ -52,8 +51,13 @@
     .node-dates { font-size: 9.5px; margin-top: 3px; font-weight: 700; color: #444; direction: ltr; }
     .person .tag { font-size: 8px; background: rgba(0,0,0,0.14); padding: 1px 5px; border-radius: 3px; margin-top: 3px; color: #000; font-weight: 700; }
     
+    /* Strict Image CSS Block */
+    .img-wrapper { width: 55px; height: 55px; display: flex; justify-content: center; align-items: center; margin: 0 auto 6px auto; overflow: hidden; border-radius: 50%; border: 2px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background-color: #f1f5f9; flex-shrink: 0; }
+    .img-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
     .marriage-bridge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 3px; min-width: 52px; position: relative; }
     .marriage-bridge .m-line { width: 100%; height: 1.8px; background-color: #111; margin: 2px 0; }
+    .marriage-bridge .m-text { font-size: 7.5px; color: #000; font-weight: 700; white-space: nowrap; line-height: 1.05; }
     
     .toggle-badge { position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; font-weight: 700; width: 19px; height: 19px; line-height: 16px; text-align: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 15; cursor: pointer; }
     li.collapsed > ul { display: none !important; }
@@ -65,7 +69,6 @@
     .c-blue { background-color: #5ce1e6 !important; }
     .c-gold { background-color: #ffc000 !important; }
     
-    /* Context Menu CSS */
     #context-menu { display: none; position: fixed; background: #fff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border: 1px solid #cbd5e1; padding: 6px 0; z-index: 10000; min-width: 170px; direction: rtl; }
     #context-menu div { padding: 10px 20px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #1e293b; transition: background 0.2s; }
     #context-menu div:hover { background: #f1f5f9; color: #2563eb; }
@@ -111,7 +114,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v4.2 Entities</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v4.5 Stable</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
