@@ -1,9 +1,10 @@
-// Version: v4.6 Perfected
+// Version: v5.0 Sync
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE & CONTEXT MENU
+   CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
 ========================================= */
 
+// ** הלינק מה-New Deployment החדש! **
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
 
 function getDirectImageUrl(url) {
@@ -85,37 +86,49 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
     if(localData.children) localData.children.forEach(c => applyCloudDataToLocal(c, mapById, mapByName));
 }
 
-// קריאה מהענן (עם הדפסת שגיאות מסודרת למקרה של בעיות הרשאה)
+// קריאה מהענן (עכשיו תומך במבנה החדש שכולל סריקת תמונות מתיקיית headshots)
 fetch(WEB_APP_URL)
     .then(async r => {
         const text = await r.text();
-        try {
-            return JSON.parse(text);
-        } catch(e) {
-            console.error("שגיאה! השרת החזיר טקסט לא תקין במקום JSON (כנראה בעיית הרשאות):", text);
-            throw new Error("Invalid Server Response");
-        }
+        try { return JSON.parse(text); } 
+        catch(e) { throw new Error("Invalid Server Response (Check 'Anyone' permission)"); }
     })
     .then(data => {
-        const dataString = JSON.stringify(data);
-        const hasOldLocalLinks = dataString.includes('Downloads/') || dataString.includes('03-לנדוור');
+        let treeConfig = data.tree || data; // תמיכה לאחור בגרסאות קודמות
+        let dynamicImages = data.images || {};
         
-        if(data && data.fogel && data.landwehr && !hasOldLocalLinks) {
+        if(treeConfig.fogel && treeConfig.landwehr) {
+            
+            // יישום סריקת התמונות החכמה מהענן על מבנה הנתונים לפני המיזוג
+            function applyDynamicImages(node) {
+                if(!node) return;
+                let cName = getCleanName(node.heb);
+                if (cName && dynamicImages[cName]) {
+                    node.customImage = dynamicImages[cName].url;
+                }
+                if(node.floatingParents) node.floatingParents.forEach(applyDynamicImages);
+                if(node.floatingSiblings) node.floatingSiblings.forEach(applyDynamicImages);
+                if(node.blood) applyDynamicImages(node.blood);
+                if(node.spouse) applyDynamicImages(node.spouse);
+                if(node.nodes) node.nodes.forEach(applyDynamicImages);
+                if(node.children) node.children.forEach(applyDynamicImages);
+            }
+            applyDynamicImages(treeConfig.fogel);
+            treeConfig.landwehr.forEach(applyDynamicImages);
+
             const mapById = new Map();
             const mapByName = new Map();
-            
             const processCloud = (c) => {
                 if (Array.isArray(c)) c.forEach(item => buildCloudMap(item.tree || item, mapById, mapByName));
                 else buildCloudMap(c, mapById, mapByName);
             };
-            
-            processCloud(data.fogel);
-            processCloud(data.landwehr);
+            processCloud(treeConfig.fogel);
+            processCloud(treeConfig.landwehr);
 
             applyCloudDataToLocal(treeDataFogel, mapById, mapByName);
             applyCloudDataToLocal(treeDataLandwehr, mapById, mapByName);
             
-            document.getElementById('loadingStatus').textContent = 'סונכרן מהענן בהצלחה ✅';
+            document.getElementById('loadingStatus').textContent = 'מחובר לענן ומסונכרן עם תמונות ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
@@ -148,7 +161,7 @@ function renderTree() {
     setTimeout(() => { fitToScreen(); }, 100);
 }
 
-function createPersonBox(personData, roleClass, colorClass) {
+function createPersonBox(personData, roleClass, colorClass, isFloating = false) {
     const div = document.createElement('div');
     const extraClass = personData.cousinWife ? 'cousin-wife' : '';
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
@@ -160,16 +173,14 @@ function createPersonBox(personData, roleClass, colorClass) {
     let customImgHtml = '';
     let finalImgUrl = personData.customImage || (personData.images && personData.images.length > 0 ? personData.images[0] : (personData.image || null));
     
-    const safeStyle = "width:55px !important; height:55px !important; min-width:55px !important; min-height:55px !important; max-width:55px !important; max-height:55px !important; border-radius:50% !important; object-fit:cover !important; margin:0 auto 6px auto !important; border:2px solid #94a3b8 !important; box-shadow:0 2px 4px rgba(0,0,0,0.1) !important; display:block !important; pointer-events:auto !important;";
-
     if (finalImgUrl) {
         if (finalImgUrl.includes('http')) {
             const directUrl = getDirectImageUrl(finalImgUrl);
             const fallbackUrl = getFallbackUrl(finalImgUrl);
             const ts = new Date().getTime();
-            customImgHtml = `<img src="${directUrl}&t=${ts}" style="${safeStyle}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
+            customImgHtml = `<img src="${directUrl}&t=${ts}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
         } else {
-            customImgHtml = `<img src="${finalImgUrl}" style="${safeStyle} display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
+            customImgHtml = `<img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
         }
     }
     
@@ -182,17 +193,21 @@ function createPersonBox(personData, roleClass, colorClass) {
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
     
-    div.addEventListener('click', (e) => { e.stopPropagation(); openModal(personData); });
-    div.addEventListener('contextmenu', (e) => {
+    // תיקון הקליק - ביטול eventListener לטובת עקיפת חסימות המסך
+    div.onclick = function(e) {
+        e.preventDefault(); e.stopPropagation();
+        openModal(personData);
+    };
+    div.oncontextmenu = function(e) {
         e.preventDefault(); e.stopPropagation();
         handleContextMenu(e, personData.id);
-    });
+    };
     
     return div;
 }
 
 function applyFloating(personBox, personData, colorClass) {
-    if ((!personData.floatingParents || personData.floatingParents.length === 0) &&
+    if ((!personData.floatingParents || personData.floatingParents.length !== 2) &&
         (!personData.floatingSiblings || personData.floatingSiblings.length === 0)) {
         return personBox;
     }
@@ -201,50 +216,41 @@ function applyFloating(personBox, personData, colorClass) {
     wrapper.style.position = 'relative';
     wrapper.style.display = 'flex';
     wrapper.style.justifyContent = 'center';
-
     wrapper.appendChild(personBox);
 
     if (personData.floatingParents && personData.floatingParents.length === 2) {
         const fpContainer = document.createElement('div');
-        fpContainer.style.position = 'absolute';
-        fpContainer.style.top = '-105px';
-        fpContainer.style.left = '50%';
-        fpContainer.style.transform = 'translateX(-50%)';
-        fpContainer.style.display = 'flex';
-        fpContainer.style.alignItems = 'center';
-        fpContainer.style.zIndex = '10';
+        fpContainer.style.position = 'absolute'; fpContainer.style.top = '-105px'; fpContainer.style.left = '50%'; fpContainer.style.transform = 'translateX(-50%)'; fpContainer.style.display = 'flex'; fpContainer.style.alignItems = 'center'; fpContainer.style.zIndex = '10';
 
-        const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass);
+        const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass, true);
         const bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
         const bridge = createBridge(bridgeId);
-        const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass);
+        const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass, true);
 
-        fpContainer.appendChild(p1);
-        fpContainer.appendChild(bridge);
-        fpContainer.appendChild(p2);
+        fpContainer.appendChild(p1); fpContainer.appendChild(bridge); fpContainer.appendChild(p2);
         wrapper.appendChild(fpContainer);
 
+        // ציור קו נקי ב-SVG במקום סתם DIV
         svgConnections.push({
-            parentElId: bridgeId,
-            childElIds: [personBox.id],
-            liElement: null,
-            offset: 22
+            customLine: true,
+            type: 'verticalToParent',
+            sourceId: bridgeId,
+            targetId: personBox.id
         });
     }
 
     if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
-        const sibBox = createPersonBox(personData.floatingSiblings[0], 'blood', colorClass);
+        const sibBox = createPersonBox(personData.floatingSiblings[0], 'blood', colorClass, true);
         
         const sibContainer = document.createElement('div');
-        sibContainer.style.position = 'absolute';
-        sibContainer.style.top = '50%';
-        sibContainer.style.left = '-160px'; // מציב את האחות משמאל
+        sibContainer.style.position = 'absolute'; sibContainer.style.top = '50%'; sibContainer.style.left = '-140px'; 
         sibContainer.style.transform = 'translateY(-50%)';
         sibContainer.style.zIndex = '10';
 
         sibContainer.appendChild(sibBox);
         wrapper.appendChild(sibContainer);
 
+        // ציור קו אופקי נקי ב-SVG לחיבור האחים
         svgConnections.push({
             customLine: true,
             type: 'horizontal',
@@ -280,7 +286,7 @@ function buildTreeNode(item) {
     } else if (item.type === 'couple') {
         if (!item.blood.id) item.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
         if (!item.spouse.id) item.spouse.id = 'node-' + Math.random().toString(36).substr(2, 9);
-        if(!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
+        if (!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
         
         let bloodBox = createPersonBox(item.blood, 'blood', item.color);
         bloodBox = applyFloating(bloodBox, item.blood, item.color);
@@ -504,25 +510,37 @@ function drawSVGConnections() {
     }
 
     svgConnections.forEach(conn => {
+        // ציור קווים עבור האחים המרחפים
         if (conn.customLine && conn.type === 'horizontal') {
             const sEl = document.getElementById(conn.sourceId);
             const tEl = document.getElementById(conn.targetId);
             if(sEl && tEl) {
-                const sC = getNativeCoords(sEl);
-                const tC = getNativeCoords(tEl);
+                const sC = getNativeCoords(sEl); const tC = getNativeCoords(tEl);
                 const y = sC.y + (sC.height / 2);
                 const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 p.setAttribute('d', `M ${sC.x} ${y} L ${tC.x} ${y}`);
-                p.setAttribute('stroke', '#222');
-                p.setAttribute('stroke-width', '2');
-                p.setAttribute('fill', 'none');
+                p.setAttribute('stroke', '#475569'); p.setAttribute('stroke-width', '2'); p.setAttribute('fill', 'none');
+                svg.appendChild(p);
+            }
+            return;
+        }
+        
+        // ציור קווים עבור ההורים המרחפים
+        if (conn.customLine && conn.type === 'verticalToParent') {
+            const sEl = document.getElementById(conn.sourceId);
+            const tEl = document.getElementById(conn.targetId);
+            if(sEl && tEl) {
+                const sC = getNativeCoords(sEl); const tC = getNativeCoords(tEl);
+                const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                p.setAttribute('d', `M ${sC.x} ${sC.bottom} L ${tC.x} ${tC.y}`);
+                p.setAttribute('stroke', '#475569'); p.setAttribute('stroke-width', '2'); p.setAttribute('fill', 'none');
                 svg.appendChild(p);
             }
             return;
         }
 
         if (conn.liElement && conn.liElement.classList.contains('collapsed')) return;
-        drawOrthogonalTreeLines(conn.parentElId, conn.childElIds, conn.offset || 32, '#222', '2', null);
+        drawOrthogonalTreeLines(conn.parentElId, conn.childElIds, 32, '#222', '2', null);
     });
 
     drawOrthogonalTreeLines('bridge-fredel-josef', ['box-mina', 'box-inda-lea'], 58, '#111111', '2', null);
@@ -713,12 +731,7 @@ async function saveEdit() {
             try { uploadResult = JSON.parse(textResp); } catch(e) { throw new Error(textResp); }
             
             if (uploadResult && uploadResult.id) {
-                if (oldImg && !oldImg.includes('undefined')) {
-                    if (!currentEditingPerson.files) currentEditingPerson.files = [];
-                    if (!currentEditingPerson.files.some(f => f.path === oldImg)) currentEditingPerson.files.push({ name: `תמונה ישנה בארכיון - ${newHeb}`, path: oldImg });
-                }
                 currentEditingPerson.customImage = `https://drive.google.com/uc?export=view&id=${uploadResult.id}`;
-                currentEditingPerson.images = [];
             } else {
                 alert('שגיאה מהשרת: ' + (uploadResult.error || 'לא התקבל לינק.'));
                 document.getElementById('uploadStatus').style.display = 'none';
