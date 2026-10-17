@@ -731,3 +731,13 @@ let treeDataLandwehr = [
                     },
                     {
                         type: "single", color: "c-landwehr",
+                        blood: { 
+                            heb: "יהושוע לנדוור", eng: "Yehoshua Landwehr", gender: "male", birth: "1921", perished: true, tag: "אח של בוזיו (תאום)",
+                            images: ["https://drive.google.com/file/d/1Z3mS10WQ4WAzAmZZ65UnI9GVUbjoXBZB/view?usp=drivesdk"]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+];
