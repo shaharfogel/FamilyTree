@@ -1,4 +1,4 @@
-<!-- Version: v4.6 Perfected -->
+<!-- Version: v5.0 Sync -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -37,25 +37,27 @@
     .wing-title { direction: rtl; text-align: center; font-weight: 800; font-size: 16px; padding: 6px 18px; border-radius: 8px; margin-bottom: 14px; background: #fff; border: 2px solid #444; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     .family-unit { display: inline-flex; align-items: center; justify-content: center; position: relative; direction: ltr; padding: 2px; border-radius: 8px; }
     
-    .person { direction: rtl; padding: 7px 10px; color: #111; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fff; min-width: 90px; max-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; transition: transform 0.15s, box-shadow 0.15s; text-align: center; line-height: 1.2; cursor: pointer; z-index: 5; border-radius: 4px; }
+    .person { direction: rtl; padding: 7px 10px; color: #111; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; background-color: #fff; min-width: 90px; max-width: 140px; box-shadow: 0 2px 5px rgba(0,0,0,0.12); position: relative; transition: transform 0.15s, box-shadow 0.15s; text-align: center; line-height: 1.2; cursor: pointer; z-index: 50; border-radius: 4px; pointer-events: auto; }
     .person.male-node { border-radius: 0 !important; }
     .person.female-node { border-radius: 20px !important; }
-    .person.blood { border: 2px solid #111 !important; font-weight: 700; z-index: 6; }
-    .person.spouse { border: 1.5px dashed #333 !important; opacity: 0.96; z-index: 5; }
-    .person.cousin-wife { border: 2px solid #111 !important; font-weight: 700; z-index: 6; }
-    .person:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.25); outline: 2px solid #2563eb; z-index: 20; }
+    .person.blood { border: 2px solid #111 !important; font-weight: 700; z-index: 51; }
+    .person.spouse { border: 1.5px dashed #333 !important; opacity: 0.96; z-index: 50; }
+    .person.cousin-wife { border: 2px solid #111 !important; font-weight: 700; z-index: 51; }
+    .person:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.25); outline: 2px solid #2563eb; z-index: 60; }
     
-    .holocaust-icon { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 85,75 15,75" fill="%23FFCC00" stroke="black" stroke-width="6"/><polygon points="50,90 15,25 85,25" fill="%23FFCC00" stroke="black" stroke-width="6"/></svg>'); background-size: contain; background-repeat: no-repeat; z-index: 10; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.3)); }
+    .holocaust-icon { position: absolute; top: -12px; right: -12px; width: 26px; height: 26px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 85,75 15,75" fill="%23FFCC00" stroke="black" stroke-width="6"/><polygon points="50,90 15,25 85,25" fill="%23FFCC00" stroke="black" stroke-width="6"/></svg>'); background-size: contain; background-repeat: no-repeat; z-index: 65; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.3)); pointer-events: none; }
     .person .heb { font-weight: 700; font-size: 11.5px; color: #000; margin-bottom: 2px; }
     .person .eng { font-size: 9.5px; color: #111; font-weight: 600; direction: ltr; }
     .node-dates { font-size: 9.5px; margin-top: 3px; font-weight: 700; color: #444; direction: ltr; }
     .person .tag { font-size: 8px; background: rgba(0,0,0,0.14); padding: 1px 5px; border-radius: 3px; margin-top: 3px; color: #000; font-weight: 700; }
     
-    .marriage-bridge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 3px; min-width: 52px; position: relative; }
+    .person img { width: 55px !important; height: 55px !important; min-width: 55px !important; min-height: 55px !important; max-width: 55px !important; max-height: 55px !important; border-radius: 50% !important; object-fit: cover !important; margin: 0 auto 6px auto !important; border: 2px solid #cbd5e1 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important; background-color: #f1f5f9 !important; display: block !important; pointer-events: none; }
+
+    .marriage-bridge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 3px; min-width: 52px; position: relative; pointer-events: none; }
     .marriage-bridge .m-line { width: 100%; height: 1.8px; background-color: #111; margin: 2px 0; }
     .marriage-bridge .m-text { font-size: 7.5px; color: #000; font-weight: 700; white-space: nowrap; line-height: 1.05; }
     
-    .toggle-badge { position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; font-weight: 700; width: 19px; height: 19px; line-height: 16px; text-align: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 15; cursor: pointer; }
+    .toggle-badge { position: absolute; bottom: -11px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; font-weight: 700; width: 19px; height: 19px; line-height: 16px; text-align: center; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); z-index: 55; cursor: pointer; pointer-events: auto; }
     li.collapsed > ul { display: none !important; }
     li.collapsed > .family-unit { background: rgba(0,0,0,0.06); box-shadow: 0 0 0 2px rgba(0,0,0,0.18); }
     
@@ -65,15 +67,14 @@
     .c-blue { background-color: #5ce1e6 !important; }
     .c-gold { background-color: #ffc000 !important; }
     
-    /* Context Menu CSS */
     #context-menu { display: none; position: fixed; background: #fff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border: 1px solid #cbd5e1; padding: 6px 0; z-index: 10000; min-width: 170px; direction: rtl; }
     #context-menu div { padding: 10px 20px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #1e293b; transition: background 0.2s; }
     #context-menu div:hover { background: #f1f5f9; color: #2563eb; }
     #context-menu .danger { color: #dc2626; border-top: 1px solid #e2e8f0; margin-top: 4px; padding-top: 10px; }
     #context-menu .danger:hover { background: #fee2e2; color: #b91c1c; }
 
-    #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-    #modal-content { background: #fff; width: 680px; max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; touch-action: auto; }
+    #modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.55); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(3px); pointer-events: auto; }
+    #modal-content { background: #fff; width: 680px; max-width: 92vw; max-height: 88vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; overflow: hidden; touch-action: auto; pointer-events: auto; }
     #modal-header { background: #1e40af; color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; direction: rtl; }
     #modal-header h2 { font-size: 18px; margin: 0; display: inline-block; }
     #modal-close { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; }
@@ -102,7 +103,7 @@
 
 <div id="initial-loader">
     <div class="loader-spinner"></div>
-    <div>טוען ומסנכרן את מסד הנתונים בענן... ⏳</div>
+    <div>טוען ומסנכרן את מסד הנתונים והתמונות מהענן... ⏳</div>
 </div>
 
 <div id="snapshot-loader">
@@ -111,7 +112,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v4.6 Perfected</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v5.0 Sync</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
@@ -179,7 +180,7 @@
             <label>שם באנגלית (לא חובה):</label>
             <input type="text" id="editNameEng">
             
-            <label>העלאת תמונה עדכנית לדרייב (תדרוס תמונה ישנה ותעביר אותה לארכיון):</label>
+            <label>העלאת תמונה למאגר הדרייב (תדרוס תמונה ישנה ותעביר לארכיון):</label>
             <input type="file" id="editImage" accept="image/*">
             <div id="uploadStatus" style="color: green; font-size: 12px; display: none; margin-bottom: 10px;">מעלה...</div>
             
