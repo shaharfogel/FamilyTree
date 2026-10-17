@@ -1,10 +1,9 @@
-// Version: v5.0 Sync
+// Version: v5.1 Perfected Fix
 /* =========================================
    LOGIC SECTION (App functionality)
    CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
 ========================================= */
 
-// ** הלינק מה-New Deployment החדש! **
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
 
 function getDirectImageUrl(url) {
@@ -86,7 +85,6 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
     if(localData.children) localData.children.forEach(c => applyCloudDataToLocal(c, mapById, mapByName));
 }
 
-// קריאה מהענן (עכשיו תומך במבנה החדש שכולל סריקת תמונות מתיקיית headshots)
 fetch(WEB_APP_URL)
     .then(async r => {
         const text = await r.text();
@@ -94,28 +92,11 @@ fetch(WEB_APP_URL)
         catch(e) { throw new Error("Invalid Server Response (Check 'Anyone' permission)"); }
     })
     .then(data => {
-        let treeConfig = data.tree || data; // תמיכה לאחור בגרסאות קודמות
+        let treeConfig = data.tree || data; 
         let dynamicImages = data.images || {};
         
         if(treeConfig.fogel && treeConfig.landwehr) {
             
-            // יישום סריקת התמונות החכמה מהענן על מבנה הנתונים לפני המיזוג
-            function applyDynamicImages(node) {
-                if(!node) return;
-                let cName = getCleanName(node.heb);
-                if (cName && dynamicImages[cName]) {
-                    node.customImage = dynamicImages[cName].url;
-                }
-                if(node.floatingParents) node.floatingParents.forEach(applyDynamicImages);
-                if(node.floatingSiblings) node.floatingSiblings.forEach(applyDynamicImages);
-                if(node.blood) applyDynamicImages(node.blood);
-                if(node.spouse) applyDynamicImages(node.spouse);
-                if(node.nodes) node.nodes.forEach(applyDynamicImages);
-                if(node.children) node.children.forEach(applyDynamicImages);
-            }
-            applyDynamicImages(treeConfig.fogel);
-            treeConfig.landwehr.forEach(applyDynamicImages);
-
             const mapById = new Map();
             const mapByName = new Map();
             const processCloud = (c) => {
@@ -127,6 +108,23 @@ fetch(WEB_APP_URL)
 
             applyCloudDataToLocal(treeDataFogel, mapById, mapByName);
             applyCloudDataToLocal(treeDataLandwehr, mapById, mapByName);
+
+            function applyDynamicImages(node) {
+                if(!node) return;
+                let cName = getCleanName(node.heb);
+                if (cName && dynamicImages[cName]) {
+                    node.customImage = dynamicImages[cName].url;
+                    node.images = [];
+                }
+                if(node.floatingParents) node.floatingParents.forEach(applyDynamicImages);
+                if(node.floatingSiblings) node.floatingSiblings.forEach(applyDynamicImages);
+                if(node.blood) applyDynamicImages(node.blood);
+                if(node.spouse) applyDynamicImages(node.spouse);
+                if(node.nodes) node.nodes.forEach(applyDynamicImages);
+                if(node.children) node.children.forEach(applyDynamicImages);
+            }
+            applyDynamicImages(treeDataFogel);
+            treeDataLandwehr.forEach(applyDynamicImages);
             
             document.getElementById('loadingStatus').textContent = 'מחובר לענן ומסונכרן עם תמונות ✅';
             document.getElementById('loadingStatus').style.color = 'green';
@@ -161,7 +159,7 @@ function renderTree() {
     setTimeout(() => { fitToScreen(); }, 100);
 }
 
-function createPersonBox(personData, roleClass, colorClass, isFloating = false) {
+function createPersonBox(personData, roleClass, colorClass) {
     const div = document.createElement('div');
     const extraClass = personData.cousinWife ? 'cousin-wife' : '';
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
@@ -193,15 +191,14 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
     
-    // תיקון הקליק - ביטול eventListener לטובת עקיפת חסימות המסך
-    div.onclick = function(e) {
-        e.preventDefault(); e.stopPropagation();
-        openModal(personData);
-    };
-    div.oncontextmenu = function(e) {
+    div.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        openModal(personData); 
+    });
+    div.addEventListener('contextmenu', (e) => {
         e.preventDefault(); e.stopPropagation();
         handleContextMenu(e, personData.id);
-    };
+    });
     
     return div;
 }
@@ -220,17 +217,24 @@ function applyFloating(personBox, personData, colorClass) {
 
     if (personData.floatingParents && personData.floatingParents.length === 2) {
         const fpContainer = document.createElement('div');
-        fpContainer.style.position = 'absolute'; fpContainer.style.top = '-105px'; fpContainer.style.left = '50%'; fpContainer.style.transform = 'translateX(-50%)'; fpContainer.style.display = 'flex'; fpContainer.style.alignItems = 'center'; fpContainer.style.zIndex = '10';
+        fpContainer.style.position = 'absolute';
+        fpContainer.style.top = '-105px';
+        fpContainer.style.left = '50%';
+        fpContainer.style.transform = 'translateX(-50%)';
+        fpContainer.style.display = 'flex';
+        fpContainer.style.alignItems = 'center';
+        fpContainer.style.zIndex = '10';
 
-        const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass, true);
+        const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass);
         const bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
         const bridge = createBridge(bridgeId);
-        const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass, true);
+        const p2 = createPersonBox(personData.floatingParents[1], 'blood', colorClass);
 
-        fpContainer.appendChild(p1); fpContainer.appendChild(bridge); fpContainer.appendChild(p2);
+        fpContainer.appendChild(p1);
+        fpContainer.appendChild(bridge);
+        fpContainer.appendChild(p2);
         wrapper.appendChild(fpContainer);
 
-        // ציור קו נקי ב-SVG במקום סתם DIV
         svgConnections.push({
             customLine: true,
             type: 'verticalToParent',
@@ -240,17 +244,18 @@ function applyFloating(personBox, personData, colorClass) {
     }
 
     if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
-        const sibBox = createPersonBox(personData.floatingSiblings[0], 'blood', colorClass, true);
+        const sibBox = createPersonBox(personData.floatingSiblings[0], 'blood', colorClass);
         
         const sibContainer = document.createElement('div');
-        sibContainer.style.position = 'absolute'; sibContainer.style.top = '50%'; sibContainer.style.left = '-140px'; 
+        sibContainer.style.position = 'absolute';
+        sibContainer.style.top = '50%';
+        sibContainer.style.left = '-140px'; 
         sibContainer.style.transform = 'translateY(-50%)';
         sibContainer.style.zIndex = '10';
 
         sibContainer.appendChild(sibBox);
         wrapper.appendChild(sibContainer);
 
-        // ציור קו אופקי נקי ב-SVG לחיבור האחים
         svgConnections.push({
             customLine: true,
             type: 'horizontal',
@@ -469,7 +474,8 @@ function drawSVGConnections() {
             x: (r.left - canvasRect.left) / scale + (r.width / scale / 2),
             y: (r.top - canvasRect.top) / scale,
             bottom: (r.bottom - canvasRect.top) / scale,
-            height: r.height / scale
+            height: r.height / scale,
+            width: r.width / scale
         };
     }
 
@@ -510,7 +516,6 @@ function drawSVGConnections() {
     }
 
     svgConnections.forEach(conn => {
-        // ציור קווים עבור האחים המרחפים
         if (conn.customLine && conn.type === 'horizontal') {
             const sEl = document.getElementById(conn.sourceId);
             const tEl = document.getElementById(conn.targetId);
@@ -518,14 +523,13 @@ function drawSVGConnections() {
                 const sC = getNativeCoords(sEl); const tC = getNativeCoords(tEl);
                 const y = sC.y + (sC.height / 2);
                 const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                p.setAttribute('d', `M ${sC.x} ${y} L ${tC.x} ${y}`);
+                p.setAttribute('d', `M ${sC.x + (sC.width/2)} ${y} L ${tC.x - (tC.width/2)} ${y}`);
                 p.setAttribute('stroke', '#475569'); p.setAttribute('stroke-width', '2'); p.setAttribute('fill', 'none');
                 svg.appendChild(p);
             }
             return;
         }
         
-        // ציור קווים עבור ההורים המרחפים
         if (conn.customLine && conn.type === 'verticalToParent') {
             const sEl = document.getElementById(conn.sourceId);
             const tEl = document.getElementById(conn.targetId);
@@ -831,7 +835,15 @@ function exportTreeAsImage(mode) {
         svg.style.width = w + 'px'; svg.style.height = h + 'px';
         if (typeof drawSVGConnections === 'function') drawSVGConnections();
         loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
-        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h, onclone: function(clonedDoc) { var imgs = clonedDoc.querySelectorAll('.person img'); for(var i = 0; i < imgs.length; i++) { var img = imgs[i]; if (img.src && img.src.indexOf('drive.google.com') !== -1) { img.src = 'https://images.weserv.nl/?url=' + encodeURIComponent(img.src); } } } }).then(function(renderedCanvas) {
+        html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h, onclone: function(clonedDoc) { 
+            var imgs = clonedDoc.querySelectorAll('.person img'); 
+            for(var i = 0; i < imgs.length; i++) { 
+                var img = imgs[i]; 
+                if (img.src && img.src.indexOf('drive.google.com') !== -1) { 
+                    img.src = 'https://wsrv.nl/?url=' + encodeURIComponent(img.src) + '&w=120&h=120&fit=cover&mask=circle'; 
+                } 
+            } 
+        } }).then(function(renderedCanvas) {
             restoreView(oldScale, oldX, oldY, svg); loaderText.textContent = "פותח חלון שמירה... 💾";
             renderedCanvas.toBlob(function(blob) { loader.style.display = 'none'; if (!blob) { alert("שגיאה ביצירת הקובץ."); return; } var filename = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png'; var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function() { URL.revokeObjectURL(url); }, 1000); }, 'image/png');
         }).catch(function(err) { console.error(err); restoreView(oldScale, oldX, oldY, svg); loader.style.display = 'none'; alert("שגיאה ביצירת התמונה: " + err.message); });
