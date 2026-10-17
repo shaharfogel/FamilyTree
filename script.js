@@ -1,9 +1,10 @@
-// Version: v4.5 Stable
+// Version: v4.5 Final Fix
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE & CONTEXT MENU & ARCHIVE
+   CLOUD DATABASE OVERRIDE & CONTEXT MENU
 ========================================= */
 
+// ודא שה-URL הבא הוא באמת מה-New Deployment שעשית ב-Apps Script.
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZDjVPjnW_-kTHSSD0ccBX4ez-y9QrQ7M7Vmmg4WDZnPhC5YQr4VxbGyqXrBh4iaHbwg/exec';
 
 function getDirectImageUrl(url) {
@@ -110,7 +111,7 @@ fetch(WEB_APP_URL)
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
-            document.getElementById('loadingStatus').textContent = 'מסד נתונים חדש נוצר ✅';
+            document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         }
         document.getElementById('initial-loader').style.display = 'none';
@@ -145,21 +146,23 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
     div.className = `person ${roleClass} ${extraClass} ${colorClass} ${genderClass}`;
     
-    // קריטי! מוודאים שיש ID לכל אדם.
     if (!personData.id) personData.id = 'node-' + Math.random().toString(36).substr(2, 9);
     div.id = personData.id;
     
     let customImgHtml = '';
     let finalImgUrl = personData.customImage || (personData.images && personData.images.length > 0 ? personData.images[0] : (personData.image || null));
     
+    // קוד אגרסיבי וחסין לכיווץ התמונות בדיוק כמו שביקשת
+    const safeStyle = "width:55px !important; height:55px !important; min-width:55px !important; min-height:55px !important; max-width:55px !important; max-height:55px !important; border-radius:50% !important; object-fit:cover !important; margin:0 auto 6px auto !important; border:2px solid #cbd5e1 !important; box-shadow:0 2px 4px rgba(0,0,0,0.1) !important; display:block !important;";
+
     if (finalImgUrl) {
         if (finalImgUrl.includes('http')) {
             const directUrl = getDirectImageUrl(finalImgUrl);
             const fallbackUrl = getFallbackUrl(finalImgUrl);
             const ts = new Date().getTime();
-            customImgHtml = `<div class="img-wrapper"><img src="${directUrl}&t=${ts}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()"></div>`;
+            customImgHtml = `<img src="${directUrl}&t=${ts}" style="${safeStyle}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
         } else {
-            customImgHtml = `<div class="img-wrapper"><img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();"></div>`;
+            customImgHtml = `<img src="${finalImgUrl}" style="${safeStyle} display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
         }
     }
     
@@ -237,8 +240,7 @@ function buildTreeNode(item) {
     } else if (item.type === 'couple') {
         if (!item.blood.id) item.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
         if (!item.spouse.id) item.spouse.id = 'node-' + Math.random().toString(36).substr(2, 9);
-        if (!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
-        
+        if(!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
         const bloodBox = createPersonBox(item.blood, 'blood', item.color);
         const spouseBox = createPersonBox(item.spouse, 'spouse', item.color);
         const bridge = createBridge(item.bridgeId);
@@ -297,9 +299,6 @@ function buildTreeNode(item) {
     return li;
 }
 
-/* ====================================================
-   CONTEXT MENU (RIGHT CLICK)
-==================================================== */
 function handleContextMenu(e, id) {
     contextTargetId = id;
     const menu = document.getElementById('context-menu');
@@ -650,7 +649,12 @@ async function saveEdit() {
             try { uploadResult = JSON.parse(textResp); } catch(e) { throw new Error(textResp); }
             
             if (uploadResult && uploadResult.id) {
+                if (oldImg && !oldImg.includes('undefined')) {
+                    if (!currentEditingPerson.files) currentEditingPerson.files = [];
+                    if (!currentEditingPerson.files.some(f => f.path === oldImg)) currentEditingPerson.files.push({ name: `תמונה ישנה בארכיון - ${newHeb}`, path: oldImg });
+                }
                 currentEditingPerson.customImage = `https://drive.google.com/uc?export=view&id=${uploadResult.id}`;
+                currentEditingPerson.images = [];
             } else {
                 alert('שגיאה מהשרת: ' + (uploadResult.error || 'לא התקבל לינק.'));
                 document.getElementById('uploadStatus').style.display = 'none';
