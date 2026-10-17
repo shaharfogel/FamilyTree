@@ -1,7 +1,7 @@
-// Version: v4.2 Entities
+// Version: v4.5 Stable
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE & CONTEXT MENU
+   CLOUD DATABASE OVERRIDE & CONTEXT MENU & ARCHIVE
 ========================================= */
 
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyZDjVPjnW_-kTHSSD0ccBX4ez-y9QrQ7M7Vmmg4WDZnPhC5YQr4VxbGyqXrBh4iaHbwg/exec';
@@ -35,7 +35,6 @@ let contextTargetId = null;
 let svgConnections = [];
 let scale = 0.55, pointX = 0, pointY = 0;
 
-// בניית מילון חכם לחיפוש אנשים מהענן לפי מזהים או שמות (כולל את הישויות המרחפות)
 function buildCloudMap(cloudData, mapById, mapByName) {
     if (!cloudData) return;
     const add = p => {
@@ -54,7 +53,6 @@ function buildCloudMap(cloudData, mapById, mapByName) {
     if (cloudData.children) cloudData.children.forEach(c => buildCloudMap(c, mapById, mapByName));
 }
 
-// שפיכת הנתונים מהענן לתוך המבנה המקומי של data.js 
 function applyCloudDataToLocal(localData, mapById, mapByName) {
     if (!localData) return;
     if (Array.isArray(localData)) {
@@ -112,7 +110,7 @@ fetch(WEB_APP_URL)
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
-            document.getElementById('loadingStatus').textContent = 'עודכן ונשמר לענן ✅';
+            document.getElementById('loadingStatus').textContent = 'מסד נתונים חדש נוצר ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         }
         document.getElementById('initial-loader').style.display = 'none';
@@ -141,13 +139,13 @@ function renderTree() {
     setTimeout(() => { fitToScreen(); }, 100);
 }
 
-// יצירת קופסאות. includes special logic for recursive floating entities
 function createPersonBox(personData, roleClass, colorClass, isFloating = false) {
     const div = document.createElement('div');
     const extraClass = personData.cousinWife ? 'cousin-wife' : '';
     const genderClass = personData.gender === 'female' ? 'female-node' : (personData.gender === 'male' ? 'male-node' : '');
     div.className = `person ${roleClass} ${extraClass} ${colorClass} ${genderClass}`;
     
+    // קריטי! מוודאים שיש ID לכל אדם.
     if (!personData.id) personData.id = 'node-' + Math.random().toString(36).substr(2, 9);
     div.id = personData.id;
     
@@ -159,9 +157,9 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
             const directUrl = getDirectImageUrl(finalImgUrl);
             const fallbackUrl = getFallbackUrl(finalImgUrl);
             const ts = new Date().getTime();
-            customImgHtml = `<img src="${directUrl}&t=${ts}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()">`;
+            customImgHtml = `<div class="img-wrapper"><img src="${directUrl}&t=${ts}" onerror="this.onerror=null;this.src='${fallbackUrl}&t=${ts}';" onload="drawSVGConnections()"></div>`;
         } else {
-            customImgHtml = `<img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();">`;
+            customImgHtml = `<div class="img-wrapper"><img src="${finalImgUrl}" style="display:none;" onload="this.style.display='block'; drawSVGConnections();"></div>`;
         }
     }
     
@@ -174,19 +172,10 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
     
     div.innerHTML = `${starHtml}${customImgHtml}<div class="heb">${personData.heb}</div><div class="eng">${personData.eng || ''}</div>${datesHtml}${personData.tag ? `<div class="tag">${personData.tag}</div>` : ''}`;
     
-    // ציור הישויות המרחפות אם יש (הורים של חתן/כלה, אחים של חתן/כלה) - רק אם התיבה הנוכחית לא מרחפת בעצמה
     if (!isFloating) {
         if (personData.floatingParents && personData.floatingParents.length === 2) {
             const fpContainer = document.createElement('div');
-            fpContainer.style.position = 'absolute';
-            fpContainer.style.top = '-105px';
-            fpContainer.style.left = '50%';
-            fpContainer.style.transform = 'translateX(-50%)';
-            fpContainer.style.display = 'flex';
-            fpContainer.style.alignItems = 'center';
-            fpContainer.style.gap = '0';
-            fpContainer.style.zIndex = '10';
-            fpContainer.style.direction = 'rtl';
+            fpContainer.style.position = 'absolute'; fpContainer.style.top = '-105px'; fpContainer.style.left = '50%'; fpContainer.style.transform = 'translateX(-50%)'; fpContainer.style.display = 'flex'; fpContainer.style.alignItems = 'center'; fpContainer.style.gap = '0'; fpContainer.style.zIndex = '10'; fpContainer.style.direction = 'rtl';
             
             const p1 = createPersonBox(personData.floatingParents[0], 'blood', colorClass, true);
             p1.style.minWidth = '80px'; p1.style.maxWidth = '90px'; p1.style.padding = '5px';
@@ -200,31 +189,20 @@ function createPersonBox(personData, roleClass, colorClass, isFloating = false) 
             fpContainer.appendChild(p1); fpContainer.appendChild(line); fpContainer.appendChild(p2);
             
             const vertLine = document.createElement('div');
-            vertLine.style.position = 'absolute'; vertLine.style.top = '-40px'; vertLine.style.left = '50%';
-            vertLine.style.width = '2px'; vertLine.style.height = '45px'; vertLine.style.background = '#475569';
-            vertLine.style.transform = 'translateX(-50%)'; vertLine.style.zIndex = '9';
+            vertLine.style.position = 'absolute'; vertLine.style.top = '-40px'; vertLine.style.left = '50%'; vertLine.style.width = '2px'; vertLine.style.height = '45px'; vertLine.style.background = '#475569'; vertLine.style.transform = 'translateX(-50%)'; vertLine.style.zIndex = '9';
             
-            div.appendChild(fpContainer);
-            div.appendChild(vertLine);
+            div.appendChild(fpContainer); div.appendChild(vertLine);
         }
 
         if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
             const sib = personData.floatingSiblings[0];
             const sibBox = createPersonBox(sib, 'blood', colorClass, true);
-            sibBox.style.position = 'absolute';
-            sibBox.style.top = '50%';
-            sibBox.style.left = '-120px'; 
-            sibBox.style.transform = 'translateY(-50%)';
-            sibBox.style.minWidth = '80px'; sibBox.style.maxWidth = '90px'; sibBox.style.padding = '5px';
-            sibBox.style.zIndex = '10';
+            sibBox.style.position = 'absolute'; sibBox.style.top = '50%'; sibBox.style.left = '-120px'; sibBox.style.transform = 'translateY(-50%)'; sibBox.style.minWidth = '80px'; sibBox.style.maxWidth = '90px'; sibBox.style.padding = '5px'; sibBox.style.zIndex = '10';
             
             const horizLine = document.createElement('div');
-            horizLine.style.position = 'absolute'; horizLine.style.top = '50%'; horizLine.style.left = '-35px';
-            horizLine.style.width = '40px'; horizLine.style.height = '2px'; horizLine.style.background = '#475569';
-            horizLine.style.zIndex = '9';
+            horizLine.style.position = 'absolute'; horizLine.style.top = '50%'; horizLine.style.left = '-35px'; horizLine.style.width = '40px'; horizLine.style.height = '2px'; horizLine.style.background = '#475569'; horizLine.style.zIndex = '9';
 
-            div.appendChild(sibBox);
-            div.appendChild(horizLine);
+            div.appendChild(sibBox); div.appendChild(horizLine);
         }
     }
     
@@ -254,9 +232,13 @@ function buildTreeNode(item) {
     unit.className = 'family-unit';
 
     if (item.type === 'single') {
+        if (!item.blood.id) item.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
         unit.appendChild(createPersonBox(item.blood, 'blood', item.color));
     } else if (item.type === 'couple') {
-        if(!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
+        if (!item.blood.id) item.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
+        if (!item.spouse.id) item.spouse.id = 'node-' + Math.random().toString(36).substr(2, 9);
+        if (!item.bridgeId) item.bridgeId = 'bridge-' + Math.random().toString(36).substr(2, 9);
+        
         const bloodBox = createPersonBox(item.blood, 'blood', item.color);
         const spouseBox = createPersonBox(item.spouse, 'spouse', item.color);
         const bridge = createBridge(item.bridgeId);
@@ -265,6 +247,7 @@ function buildTreeNode(item) {
         else { unit.appendChild(bloodBox); unit.appendChild(bridge); unit.appendChild(spouseBox); }
     } else if (item.type === 'multi') {
         item.nodes.forEach((n, idx) => {
+            if (!n.id) n.id = 'node-' + Math.random().toString(36).substr(2, 9);
             unit.appendChild(createPersonBox(n, n.role, item.color));
             if (idx < item.nodes.length - 1) unit.appendChild(createBridge());
         });
@@ -284,8 +267,15 @@ function buildTreeNode(item) {
         
         const ul = document.createElement('ul');
         const childIds = item.children.map(child => {
-            if (child.type === 'multi') { return (child.nodes.find(n => n.role === 'blood') || child.nodes[0]).id; } 
-            else { return child.blood.id; }
+            if (child.type === 'multi') { 
+                const blood = child.nodes.find(n => n.role === 'blood') || child.nodes[0];
+                if (!blood.id) blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
+                return blood.id; 
+            } 
+            else { 
+                if (!child.blood.id) child.blood.id = 'node-' + Math.random().toString(36).substr(2, 9);
+                return child.blood.id; 
+            }
         });
 
         let sourceId;
@@ -308,7 +298,7 @@ function buildTreeNode(item) {
 }
 
 /* ====================================================
-   CONTEXT MENU (RIGHT CLICK) - Add/Delete Features
+   CONTEXT MENU (RIGHT CLICK)
 ==================================================== */
 function handleContextMenu(e, id) {
     contextTargetId = id;
@@ -331,6 +321,24 @@ function findNodeInfo(dataArray, targetId) {
             let found = node.nodes.find(n => n.id === targetId);
             if(found) return { obj: node, array: dataArray, index: i, role: 'multi' };
         }
+        
+        if (node.blood && node.blood.floatingParents) {
+            let found = node.blood.floatingParents.find(n => n.id === targetId);
+            if (found) return { floatingSource: node.blood, role: 'floatingParents', item: found };
+        }
+        if (node.spouse && node.spouse.floatingParents) {
+            let found = node.spouse.floatingParents.find(n => n.id === targetId);
+            if (found) return { floatingSource: node.spouse, role: 'floatingParents', item: found };
+        }
+        if (node.blood && node.blood.floatingSiblings) {
+            let found = node.blood.floatingSiblings.find(n => n.id === targetId);
+            if (found) return { floatingSource: node.blood, role: 'floatingSiblings', item: found };
+        }
+        if (node.spouse && node.spouse.floatingSiblings) {
+            let found = node.spouse.floatingSiblings.find(n => n.id === targetId);
+            if (found) return { floatingSource: node.spouse, role: 'floatingSiblings', item: found };
+        }
+
         if (node.children && node.children.length > 0) {
             let res = findNodeInfo(node.children, targetId);
             if (res) return res;
@@ -343,6 +351,7 @@ function contextAddChild() {
     let roots = [treeDataFogel, ...treeDataLandwehr];
     const res = findNodeInfo(roots, contextTargetId);
     if(res) {
+        if(res.floatingSource) { alert("לא ניתן להוסיף ילדים לקרובים המרחפים. הוסף אותם כענף נפרד במערכת בעתיד."); return; }
         const childName = prompt("הכנס שם מלא של הילד/ה החדש/ה:");
         if(childName && childName.trim() !== '') {
             if(!res.obj.children) res.obj.children = [];
@@ -360,6 +369,7 @@ function contextAddSpouse() {
     let roots = [treeDataFogel, ...treeDataLandwehr];
     const res = findNodeInfo(roots, contextTargetId);
     if(res) {
+        if(res.floatingSource) { alert("לא ניתן להוסיף בני זוג לקרובים המרחפים."); return; }
         if(res.obj.type === 'single') {
             const spouseName = prompt("הכנס שם של בן/בת הזוג להוספה:");
             if(spouseName && spouseName.trim() !== '') {
@@ -378,6 +388,7 @@ function contextDeleteNode() {
     let roots = [treeDataFogel, ...treeDataLandwehr];
     const res = findNodeInfo(roots, contextTargetId);
     if(res) {
+        if(res.floatingSource) { alert("לא ניתן למחוק קרוב משפחה מרחף דרך תפריט זה."); return; }
         if(res.array === roots && res.index === 0) { alert("לא ניתן למחוק את שורש העץ. פעולה חסומה."); return; }
         
         const pass = prompt("אזהרה! פעולה זו תמחק את האדם ואת כל צאצאיו (ענף שלם) לנצח.\nאנא הכנס סיסמת אישור מחיקה:");
@@ -639,12 +650,7 @@ async function saveEdit() {
             try { uploadResult = JSON.parse(textResp); } catch(e) { throw new Error(textResp); }
             
             if (uploadResult && uploadResult.id) {
-                if (oldImg && !oldImg.includes('undefined')) {
-                    if (!currentEditingPerson.files) currentEditingPerson.files = [];
-                    if (!currentEditingPerson.files.some(f => f.path === oldImg)) currentEditingPerson.files.push({ name: `תמונה ישנה בארכיון - ${newHeb}`, path: oldImg });
-                }
                 currentEditingPerson.customImage = `https://drive.google.com/uc?export=view&id=${uploadResult.id}`;
-                currentEditingPerson.images = [];
             } else {
                 alert('שגיאה מהשרת: ' + (uploadResult.error || 'לא התקבל לינק.'));
                 document.getElementById('uploadStatus').style.display = 'none';
