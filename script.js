@@ -1,10 +1,10 @@
-// Version: v9.2 Auto-Sync
+// Version: v9.3 Final
 /* =========================================
    LOGIC SECTION (App functionality)
    UNIQUE ID ENGINE, SAFE-CHECKS, SYNC
 ========================================= */
 
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeLVSN2wXUdv09wQy8lHisM-9GDvPoad4GkQDWkIKsN36QoHGvAw087vwtVoMK6cUqOA/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxslzuCpMXxgEdtAhtCinEVYHJbZncXBT2ktiSHIXBoDz4ZEOypsutHLjYy9rAludDSOA/exec';
 
 function getDirectImageUrl(url) {
     if (!url) return '';
@@ -660,6 +660,20 @@ function openModal(person) {
         } else {
             if (filesSection) filesSection.style.display = 'none';
         }
+    }
+    
+    const globalContainer = document.getElementById('global-files');
+    if(globalContainer && globalContainer.innerHTML === '') {
+        const globalArchiveFiles = [
+            { name: "תיקיית Google Drive המלאה של הארכיון", path: "https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM" },
+            { name: "00-קראו-אותי.txt (מדריך הארכיון המלא)", path: "https://drive.google.com/file/d/1r5ctjXz-s5ogfpdvDGz4t8GOZqNEnf-w/view?usp=drivesdk" },
+            { name: "01-עצים / Family Tree-print-poster.pdf", path: "https://drive.google.com/file/d/1KgSHz2mMJ_5KkYP4OE882ZzKQW-Y0Tvp/view?usp=drivesdk" },
+            { name: "02-פוגל / פוגל-דף-הנצחה.pdf", path: "https://drive.google.com/file/d/1LXAkkSLRvkq6YUasl10JvXQLVUBJOqZU/view?usp=drivesdk" },
+            { name: "03-לנדוור / דף הקראת שמות מעודכן עם תמונות.pdf", path: "https://drive.google.com/file/d/1XSbmG457Ik6_CFm36Pp46rRVbjuYA6LQ/view?usp=drivesdk" }
+        ];
+        globalArchiveFiles.forEach(f => {
+            const a = document.createElement('a'); a.className = 'file-link'; a.href = f.path; a.target = '_blank'; a.textContent = `📂 ${f.name}`; globalContainer.appendChild(a);
+        });
     }
     
     const modalBody = document.getElementById('modal-body');
