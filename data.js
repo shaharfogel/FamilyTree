@@ -1,4 +1,4 @@
-// Version: v4.2 Entities
+// Version: v4.6 Perfected
 let treeDataFogel = {
     type: "couple", color: "c-root", defaultExpanded: true,
     blood: { heb: "יוכבד", eng: "Yochevet", gender: "female", tag: "שורש המשפחה", story: "אם המשפחה בראש העץ יחד עם דב. חמשת ילדיהם הם: פרויים גולדין, טוביה פייגל, הדוד ממקסיקו, פרדל פייגל (גלוברמן), ואברהם יעקב פייגל." },
@@ -526,9 +526,7 @@ let treeDataFogel = {
                         {
                             type: "couple", color: "c-pink", defaultExpanded: true, spouseSide: "left",
                             spouse: { 
-                                heb: "חיה פוגל",
-                                eng: "Chaya Fogel", 
-                                gender: "female",
+                                heb: "חיה פוגל", eng: "Chaya Fogel", gender: "female",
                                 floatingSiblings: [
                                     { heb: "אביבה סטולר", gender: "female", tag: "אחות" }
                                 ]
@@ -555,9 +553,7 @@ let treeDataFogel = {
                                 {
                                     type: "couple", color: "c-pink", defaultExpanded: true, spouseSide: "left",
                                     spouse: { 
-                                        heb: "רוזי פוגל",
-                                        eng: "Rozy Fogel", 
-                                        gender: "female",
+                                        heb: "רוזי פוגל", eng: "Rozy Fogel", gender: "female",
                                         floatingParents: [
                                             { heb: "משה בכר", gender: "male" },
                                             { heb: "ויקי בכר", gender: "female" }
