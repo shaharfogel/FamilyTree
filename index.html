@@ -1,4 +1,4 @@
-<!-- Version: v7.0 Cache Busting -->
+<!-- Version: v8.1 Sync Fix -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -116,14 +116,15 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v7.0 Sync</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v8.1 Sync Fix</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
     <button onclick="collapseAll()">סגור הכל (-)</button>
     <button onclick="fitToScreen()">התאם למסך</button>
-    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 שמור פוסטר בסיסי</button>
-    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 שמור פוסטר מתקדם</button>
+    <button class="secondary" onclick="window.open('https://drive.google.com/drive/folders/1Yj5zDY-j68gUI9kwHvzTOWipZ2IuwAfM', '_blank')">📂 ארכיון מלא</button>
+    <button class="secondary" onclick="exportTreeAsImage('basic')">📷 פוסטר בסיסי</button>
+    <button class="primary" onclick="exportTreeAsImage('advanced')">📸 פוסטר מתקדם</button>
 </div>
 
 <div class="legend">
@@ -179,13 +180,8 @@
             </div>
 
             <div class="modal-section" id="files-section" style="display:none;">
-                <h3>📁 מסמכים, דפי עד וקישורים ישירים</h3>
+                <h3>📁 מסמכים, דפי עד וקישורים אישיים</h3>
                 <div id="modal-files"></div>
-            </div>
-            
-            <div class="modal-section" id="global-section">
-                <h3>📚 קבצי מחקר ואינדקס כלליים</h3>
-                <div id="global-files"></div>
             </div>
         </div>
 
@@ -222,8 +218,7 @@
     </div>
 </div>
 
-<!-- טריק ה-Cache Busting כדי שהדפדפן ימשוך תמיד את הגרסה החדשה ביותר! -->
-<script src="data.js?v=7.0"></script>
-<script src="script.js?v=7.0"></script>
+<script src="data.js?v=8.1"></script>
+<script src="script.js?v=8.1"></script>
 </body>
 </html>
