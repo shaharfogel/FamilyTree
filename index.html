@@ -1,4 +1,4 @@
-<!-- Version: v6.0 Bulletproof -->
+<!-- Version: v7.0 Cache Busting -->
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -116,7 +116,7 @@
 </div>
 
 <div class="toolbar">
-    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v6.0 Bulletproof</span></h1>
+    <h1>🌳 משפחות פוגל ולנדוור <span class="version-badge">v7.0 Sync</span></h1>
     <div id="loadingStatus" style="font-size:12px; color:#b83b5e; margin-right:10px;"></div>
     <button class="accent" onclick="resetDefaultView()">ברירת מחדל</button>
     <button onclick="expandAll()">פתח הכל (+)</button>
@@ -178,7 +178,6 @@
                 <div id="modal-images" class="modal-img-grid"></div>
             </div>
 
-            <!-- החזרנו את כל הסקשנים בצורה מסודרת ובטוחה -->
             <div class="modal-section" id="files-section" style="display:none;">
                 <h3>📁 מסמכים, דפי עד וקישורים ישירים</h3>
                 <div id="modal-files"></div>
@@ -223,7 +222,8 @@
     </div>
 </div>
 
-<script src="data.js"></script>
-<script src="script.js"></script>
+<!-- טריק ה-Cache Busting כדי שהדפדפן ימשוך תמיד את הגרסה החדשה ביותר! -->
+<script src="data.js?v=7.0"></script>
+<script src="script.js?v=7.0"></script>
 </body>
 </html>
