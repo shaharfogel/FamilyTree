@@ -1,4 +1,4 @@
-// Version: v10.0 Upload Feature
+// Version: v10.1 Fun Loader
 /* =========================================
    LOGIC SECTION (App functionality)
    UNIQUE ID ENGINE, MULTIPLE UPLOADS, SYNC
@@ -33,6 +33,30 @@ function getCleanName(htmlString) {
 function getLettersOnly(str) {
     if(!str) return '';
     return str.replace(/[^a-zA-Z\u0590-\u05FF]/g, '');
+}
+
+// === מנגנון הודעות הטעינה המתחלפות ===
+const loaderMsgEl = document.getElementById('loader-message');
+const loaderMessages = [
+    "מתחבר לארכיון המשפחתי בענן... ☁️",
+    "שולף תעודות, זכרונות ומסמכים ישנים... 📜",
+    "מנקה אבק מתמונות השחור-לבן... 🖼️",
+    "מחשב מי בן דוד שני של מי (זה מסובך)... 🤯",
+    "מסדר את הענפים בעץ... 🌳",
+    "מוזג קפה לסבא יוסקה... ☕",
+    "ממש עוד רגע מוכן... ⏳"
+];
+let msgIndex = 0;
+let loaderInterval = null;
+if(loaderMsgEl) {
+    loaderInterval = setInterval(() => {
+        msgIndex = (msgIndex + 1) % loaderMessages.length;
+        loaderMsgEl.style.opacity = 0; 
+        setTimeout(() => {
+            loaderMsgEl.textContent = loaderMessages[msgIndex];
+            loaderMsgEl.style.opacity = 1; 
+        }, 400); // מחכה שהפייד ייעלם ואז מחליף טקסט
+    }, 2800); // מתחלף כל 2.8 שניות
 }
 
 let currentEditingPerson = null;
@@ -148,9 +172,24 @@ fetch(WEB_APP_URL)
         } else {
             saveToDrive();
         }
-        document.getElementById('initial-loader').style.display = 'none';
-        renderTree();
+        
+        // עוצרים את האנימציה ומעלימים את המסך יפה
+        clearInterval(loaderInterval);
+        if(loaderMsgEl) {
+            loaderMsgEl.style.opacity = 0;
+            setTimeout(() => {
+                loaderMsgEl.textContent = "בניית העץ הושלמה! ✨";
+                loaderMsgEl.style.opacity = 1;
+            }, 300);
+        }
+        
+        setTimeout(() => {
+            document.getElementById('initial-loader').style.display = 'none';
+            renderTree();
+        }, 1200); // מחכה עוד קצת שיראו את הודעת הסיום
+        
     }).catch(e => {
+        clearInterval(loaderInterval);
         console.error("Fetch Error:", e);
         document.getElementById('loadingStatus').textContent = 'עובד ללא סנכרון ⚠️';
         document.getElementById('initial-loader').style.display = 'none';
