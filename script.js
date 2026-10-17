@@ -1,7 +1,7 @@
-// Version: v8.1 Sync Fix
+// Version: v9.0 ID Engine
 /* =========================================
    LOGIC SECTION (App functionality)
-   CLOUD DATABASE OVERRIDE, CONTEXT MENU, IMAGE SYNC
+   UNIQUE ID ENGINE, SAFE-CHECKS, SYNC
 ========================================= */
 
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbylCyEMC0-q-6uRrTglf-K7a4NZ5xPi12dfSMEFKURrwAvfaual5searuGy4KdGjestYQ/exec';
@@ -79,6 +79,8 @@ function applyCloudDataToLocal(localData, mapById, mapByName) {
                     p[f] = cloudMatch[f];
                 }
             });
+            // אם לענן יש ID, תמשוך אותו כדי למנוע יצירת ID כפול
+            if(cloudMatch.id) p.id = cloudMatch.id;
         }
         if (p.floatingParents) p.floatingParents.forEach(updatePerson);
         if (p.floatingSiblings) p.floatingSiblings.forEach(updatePerson);
@@ -101,7 +103,6 @@ fetch(WEB_APP_URL)
         let dynamicImages = data.images || {};
         
         if(treeConfig.fogel && treeConfig.landwehr) {
-            
             const mapById = new Map();
             const mapByName = new Map();
             const processCloud = (c) => {
@@ -116,12 +117,21 @@ fetch(WEB_APP_URL)
 
             function applyDynamicImages(node) {
                 if(!node) return;
-                let cName = getLettersOnly(getCleanName(node.heb));
-                if (cName && dynamicImages[cName]) {
-                    node.customImage = dynamicImages[cName].url;
-                    node.images = []; 
-                    node.image = null; 
+                
+                // שיטה 1: בדיקת ID אבסולוטי (לפי המנגנון החדש)
+                if (node.id && dynamicImages[node.id]) {
+                    node.customImage = dynamicImages[node.id].url;
+                    node.images = [];
+                } 
+                // שיטה 2: Fallback לשמות התמונות הישנות 
+                else {
+                    let cName = getLettersOnly(getCleanName(node.heb));
+                    if (cName && dynamicImages[cName]) {
+                        node.customImage = dynamicImages[cName].url;
+                        node.images = [];
+                    }
                 }
+                
                 if(node.floatingParents) node.floatingParents.forEach(applyDynamicImages);
                 if(node.floatingSiblings) node.floatingSiblings.forEach(applyDynamicImages);
                 if(node.blood) applyDynamicImages(node.blood);
@@ -132,7 +142,7 @@ fetch(WEB_APP_URL)
             applyDynamicImages(treeDataFogel);
             treeDataLandwehr.forEach(applyDynamicImages);
             
-            document.getElementById('loadingStatus').textContent = 'מחובר לענן ומסונכרן עם תמונות ✅';
+            document.getElementById('loadingStatus').textContent = 'מסד ו-ID תמונות סונכרנו ✅';
             document.getElementById('loadingStatus').style.color = 'green';
         } else {
             saveToDrive();
@@ -243,12 +253,7 @@ function applyFloating(personBox, personData, colorClass) {
         fpContainer.appendChild(p2);
         wrapper.appendChild(fpContainer);
 
-        svgConnections.push({
-            customLine: true,
-            type: 'verticalToParent',
-            sourceId: bridgeId,
-            targetId: personBox.id
-        });
+        svgConnections.push({ customLine: true, type: 'verticalToParent', sourceId: bridgeId, targetId: personBox.id });
     }
 
     if (personData.floatingSiblings && personData.floatingSiblings.length > 0) {
@@ -264,12 +269,7 @@ function applyFloating(personBox, personData, colorClass) {
         sibContainer.appendChild(sibBox);
         wrapper.appendChild(sibContainer);
 
-        svgConnections.push({
-            customLine: true,
-            type: 'horizontal',
-            sourceId: sibBox.id,
-            targetId: personBox.id
-        });
+        svgConnections.push({ customLine: true, type: 'horizontal', sourceId: sibBox.id, targetId: personBox.id });
     }
 
     return wrapper;
@@ -368,14 +368,19 @@ function buildTreeNode(item) {
 function handleContextMenu(e, id) {
     contextTargetId = id;
     const menu = document.getElementById('context-menu');
-    menu.style.display = 'block';
-    let left = e.pageX; let top = e.pageY;
-    if(left + 200 > window.innerWidth) left -= 150;
-    menu.style.left = left + 'px';
-    menu.style.top = top + 'px';
+    if(menu) {
+        menu.style.display = 'block';
+        let left = e.pageX; let top = e.pageY;
+        if(left + 200 > window.innerWidth) left -= 150;
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+    }
 }
 
-document.addEventListener('click', () => { document.getElementById('context-menu').style.display = 'none'; });
+document.addEventListener('click', () => { 
+    const menu = document.getElementById('context-menu');
+    if(menu) menu.style.display = 'none'; 
+});
 
 function findNodeInfo(dataArray, targetId) {
     for (let i = 0; i < dataArray.length; i++) {
@@ -565,6 +570,7 @@ if (typeof ResizeObserver !== 'undefined' && canvasEl) {
     resizeObserver.observe(canvasEl);
 }
 
+// אלגוריתם ה-Safe Checks: כל פעולה נבדקת אם האלמנט קיים לפני שהיא מבוצעת
 function openModal(person) {
     currentEditingPerson = person;
     
@@ -656,30 +662,47 @@ function openModal(person) {
 }
 
 function enterEditMode() {
-    document.getElementById('modal-body').style.display = 'none';
-    document.getElementById('modal-edit').style.display = 'block';
+    const elBody = document.getElementById('modal-body');
+    const elEdit = document.getElementById('modal-edit');
+    if(elBody) elBody.style.display = 'none';
+    if(elEdit) elEdit.style.display = 'block';
     
     const cleanName = getCleanName(currentEditingPerson.heb);
 
-    document.getElementById('editNameHeb').value = cleanName || '';
-    document.getElementById('editNameEng').value = currentEditingPerson.eng || '';
-    document.getElementById('editBirth').value = currentEditingPerson.birth || '';
-    document.getElementById('editDeath').value = currentEditingPerson.death || '';
-    document.getElementById('editImage').value = '';
-    document.getElementById('editNewStory').value = '';
-    document.getElementById('editPerished').checked = currentEditingPerson.perished === true;
+    const hebEl = document.getElementById('editNameHeb'); if(hebEl) hebEl.value = cleanName || '';
+    const engEl = document.getElementById('editNameEng'); if(engEl) engEl.value = currentEditingPerson.eng || '';
+    const birthEl = document.getElementById('editBirth'); if(birthEl) birthEl.value = currentEditingPerson.birth || '';
+    const deathEl = document.getElementById('editDeath'); if(deathEl) deathEl.value = currentEditingPerson.death || '';
+    const imgEl = document.getElementById('editImage'); if(imgEl) imgEl.value = '';
+    const storyEl = document.getElementById('editNewStory'); if(storyEl) storyEl.value = '';
     
-    if (currentEditingPerson.gender === 'female') document.querySelector('input[name="editGender"][value="female"]').checked = true;
-    else if (currentEditingPerson.gender === 'male') document.querySelector('input[name="editGender"][value="male"]').checked = true;
-    else document.querySelectorAll('input[name="editGender"]').forEach(el => el.checked = false);
+    const perishedEl = document.getElementById('editPerished'); 
+    if(perishedEl) perishedEl.checked = currentEditingPerson.perished === true;
+    
+    if (currentEditingPerson.gender === 'female') {
+        const rad = document.querySelector('input[name="editGender"][value="female"]');
+        if(rad) rad.checked = true;
+    }
+    else if (currentEditingPerson.gender === 'male') {
+        const rad = document.querySelector('input[name="editGender"][value="male"]');
+        if(rad) rad.checked = true;
+    }
+    else {
+        document.querySelectorAll('input[name="editGender"]').forEach(el => el.checked = false);
+    }
 }
 
 function cancelEdit() {
-    document.getElementById('modal-edit').style.display = 'none';
-    document.getElementById('modal-body').style.display = 'flex';
+    const elBody = document.getElementById('modal-body');
+    const elEdit = document.getElementById('modal-edit');
+    if(elEdit) elEdit.style.display = 'none';
+    if(elBody) elBody.style.display = 'flex';
 }
 
-function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+function closeModal() { 
+    const overlay = document.getElementById('modal-overlay');
+    if(overlay) overlay.style.display = 'none'; 
+}
 
 const compressImage = async (file) => {
     return new Promise((resolve, reject) => {
@@ -710,31 +733,32 @@ const compressImage = async (file) => {
 };
 
 async function saveEdit() {
-    let newHeb = document.getElementById('editNameHeb').value;
+    const hebEl = document.getElementById('editNameHeb');
+    let newHeb = hebEl ? hebEl.value : currentEditingPerson.heb;
 
     if (!currentEditingPerson.originalHeb) {
         currentEditingPerson.originalHeb = getCleanName(currentEditingPerson.heb);
     }
     currentEditingPerson.heb = newHeb;
     
-    currentEditingPerson.eng = document.getElementById('editNameEng').value;
-    currentEditingPerson.birth = document.getElementById('editBirth').value;
-    currentEditingPerson.death = document.getElementById('editDeath').value;
-    currentEditingPerson.perished = document.getElementById('editPerished').checked;
+    const engEl = document.getElementById('editNameEng'); if(engEl) currentEditingPerson.eng = engEl.value;
+    const birthEl = document.getElementById('editBirth'); if(birthEl) currentEditingPerson.birth = birthEl.value;
+    const deathEl = document.getElementById('editDeath'); if(deathEl) currentEditingPerson.death = deathEl.value;
+    const perishedEl = document.getElementById('editPerished'); if(perishedEl) currentEditingPerson.perished = perishedEl.checked;
     
-    const newStoryText = document.getElementById('editNewStory').value.trim();
-    if(newStoryText) {
+    const storyEl = document.getElementById('editNewStory');
+    if(storyEl && storyEl.value.trim() !== '') {
         if(!currentEditingPerson.stories) currentEditingPerson.stories = [];
-        currentEditingPerson.stories.unshift({ date: new Date().toLocaleDateString('he-IL'), text: newStoryText });
+        currentEditingPerson.stories.unshift({ date: new Date().toLocaleDateString('he-IL'), text: storyEl.value.trim() });
     }
     
     const genderEl = document.querySelector('input[name="editGender"]:checked');
     if (genderEl) currentEditingPerson.gender = genderEl.value;
 
     const fileInput = document.getElementById('editImage');
-    if (fileInput.files.length > 0) {
-        document.getElementById('uploadStatus').style.display = 'block';
-        document.getElementById('uploadStatus').textContent = 'מכווץ ושומר בענן...';
+    const uploadStatus = document.getElementById('uploadStatus');
+    if (fileInput && fileInput.files.length > 0) {
+        if(uploadStatus) { uploadStatus.style.display = 'block'; uploadStatus.textContent = 'מכווץ ושומר בענן...'; }
         try {
             const file = fileInput.files[0];
             const base64 = await compressImage(file);
@@ -748,7 +772,14 @@ async function saveEdit() {
 
             const uploadResponse = await fetch(WEB_APP_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'uploadImage', base64: base64, mimeType: 'image/jpeg', personName: newHeb, oldImageId: oldImgId })
+                body: JSON.stringify({ 
+                    action: 'uploadImage', 
+                    base64: base64, 
+                    mimeType: 'image/jpeg', 
+                    personName: newHeb, 
+                    nodeId: currentEditingPerson.id,
+                    oldImageId: oldImgId 
+                })
             });
             const textResp = await uploadResponse.text();
             let uploadResult;
@@ -758,15 +789,15 @@ async function saveEdit() {
                 currentEditingPerson.customImage = `https://drive.google.com/uc?export=view&id=${uploadResult.id}`;
             } else {
                 alert('שגיאה מהשרת: ' + (uploadResult.error || 'לא התקבל לינק.'));
-                document.getElementById('uploadStatus').style.display = 'none';
+                if(uploadStatus) uploadStatus.style.display = 'none';
                 return;
             }
         } catch(e) {
             alert('שגיאה בהעלאת התמונה: ' + e.message);
-            document.getElementById('uploadStatus').style.display = 'none';
+            if(uploadStatus) uploadStatus.style.display = 'none';
             return;
         }
-        document.getElementById('uploadStatus').style.display = 'none';
+        if(uploadStatus) uploadStatus.style.display = 'none';
     }
     await saveToDrive();
     closeModal();
@@ -774,18 +805,17 @@ async function saveEdit() {
 }
 
 async function saveToDrive() {
+    const loadStatus = document.getElementById('loadingStatus');
     try {
-        document.getElementById('loadingStatus').textContent = 'שומר ל-DB... ☁️';
-        document.getElementById('loadingStatus').style.color = '#b83b5e';
+        if(loadStatus) { loadStatus.textContent = 'שומר ל-DB... ☁️'; loadStatus.style.color = '#b83b5e'; }
         await fetch(WEB_APP_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'saveConfig', data: { fogel: treeDataFogel, landwehr: treeDataLandwehr } })
         });
-        document.getElementById('loadingStatus').textContent = 'שמור במסד הנתונים בענן ✅';
-        document.getElementById('loadingStatus').style.color = 'green';
+        if(loadStatus) { loadStatus.textContent = 'שמור במסד הנתונים בענן ✅'; loadStatus.style.color = 'green'; }
     } catch(e) {
         console.error(e);
-        document.getElementById('loadingStatus').textContent = 'שגיאת שמירה ❌';
+        if(loadStatus) { loadStatus.textContent = 'שגיאת שמירה ❌'; }
     }
 }
 
@@ -841,7 +871,8 @@ function collapseAll() { document.querySelectorAll('.tree > ul > li li').forEach
 function exportTreeAsImage(mode) {
     var loader = document.getElementById('snapshot-loader'); var loaderText = document.getElementById('loader-text');
     document.body.classList.remove('print-basic', 'printing-export');
-    loader.style.display = 'flex'; loaderText.textContent = "מכין את העץ לצילום איכותי... ⏳";
+    if(loader) loader.style.display = 'flex'; 
+    if(loaderText) loaderText.textContent = "מכין את העץ לצילום איכותי... ⏳";
     document.body.classList.add('printing-export');
     if (mode === 'basic') document.body.classList.add('print-basic');
     var canvas = document.getElementById('canvas');
@@ -852,16 +883,33 @@ function exportTreeAsImage(mode) {
     setTimeout(function() {
         var w = canvas.scrollWidth; var h = canvas.scrollHeight;
         var svg = document.getElementById('svg-lines');
-        svg.style.width = w + 'px'; svg.style.height = h + 'px';
+        if(svg) { svg.style.width = w + 'px'; svg.style.height = h + 'px'; }
         if (typeof drawSVGConnections === 'function') drawSVGConnections();
-        loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
+        if(loaderText) loaderText.textContent = "מצלם את כל הענפים והקווים... 📸";
         html2canvas(canvas, { scale: 1.5, useCORS: true, allowTaint: false, backgroundColor: '#f4f6f9', width: w, height: h, windowWidth: w, windowHeight: h }).then(function(renderedCanvas) {
-            restoreView(oldScale, oldX, oldY, svg); loaderText.textContent = "פותח חלון שמירה... 💾";
-            renderedCanvas.toBlob(function(blob) { loader.style.display = 'none'; if (!blob) { alert("שגיאה ביצירת הקובץ."); return; } var filename = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png'; var url = URL.createObjectURL(blob); var a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function() { URL.revokeObjectURL(url); }, 1000); }, 'image/png');
-        }).catch(function(err) { console.error(err); restoreView(oldScale, oldX, oldY, svg); loader.style.display = 'none'; alert("שגיאה ביצירת התמונה: " + err.message); });
+            restoreView(oldScale, oldX, oldY, svg); 
+            if(loaderText) loaderText.textContent = "פותח חלון שמירה... 💾";
+            renderedCanvas.toBlob(function(blob) { 
+                if(loader) loader.style.display = 'none'; 
+                if (!blob) { alert("שגיאה ביצירת הקובץ."); return; } 
+                var filename = mode === 'basic' ? 'family-tree-basic.png' : 'family-tree-advanced.png'; 
+                var url = URL.createObjectURL(blob); 
+                var a = document.createElement('a'); a.href = url; a.download = filename; 
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); 
+                setTimeout(function() { URL.revokeObjectURL(url); }, 1000); 
+            }, 'image/png');
+        }).catch(function(err) { 
+            console.error(err); restoreView(oldScale, oldX, oldY, svg); 
+            if(loader) loader.style.display = 'none'; 
+            alert("שגיאה ביצירת התמונה: " + err.message); 
+        });
     }, 600);
 }
 
-function restoreView(oldScale, oldX, oldY, svg) { document.body.classList.remove('print-basic', 'printing-export'); svg.style.width = '100%'; svg.style.height = '100%'; scale = oldScale; pointX = oldX; pointY = oldY; updateTransform(); }
+function restoreView(oldScale, oldX, oldY, svg) { 
+    document.body.classList.remove('print-basic', 'printing-export'); 
+    if(svg) { svg.style.width = '100%'; svg.style.height = '100%'; }
+    scale = oldScale; pointX = oldX; pointY = oldY; updateTransform(); 
+}
 window.addEventListener('resize', () => { drawSVGConnections(); });
 window.addEventListener('load', () => setTimeout(drawSVGConnections, 500));
